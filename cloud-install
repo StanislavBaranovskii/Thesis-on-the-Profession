@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+
+#ssh-keygen -t ed25519
+
+#yc compute instance list
+
+WEB_VM1_NAME=vm-web1
+WEB_VM2_NAME=vm-web2
+
+ZONE=ru-central1-a
+
+echo [web] > ~/Thesis-on-the-Profession/ansible/hosts
+
+for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
+do
+    yc compute instance get $VM_NAME &>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "ВМ $VM_NAME не найдена. Создаём"
+        #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub >/dev/null
+        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 4GB  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=20,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub >/dev/null
+        if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; fi 
+    else
+        echo "ВМ $VM_NAME уже существует"
+    fi
+
+    VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+    echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
+    ZONE=ru-central1-b
+done
+
+sleep 25s
+
+cd ~/Thesis-on-the-Profession/ansible
+ansible-playbook my.yml
+
+#sleep 1s
+
+#tar czf - ~/Thesis-on-the-Profession/WWW/index.nginx-debian.html | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /var/www/html/index.nginx-debian.html
+#scp ~/Thesis-on-the-Profession/WWW/index.nginx-debian.html yc-user@$IP_WEB_VM1:/tmp/
+
+#tar czf - ~/Thesis-on-the-Profession/WWW/default | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /etc/nginx/sites-enabled/default
+#scp ~/Thesis-on-the-Profession/WWW/default yc-user@$IP_WEB_VM1:/tmp/
+
+#sleep 1s
+
+#ansible -b web -m shell -a 'mv -f /tmp/index.nginx-debian.html /var/www/html/'
+#ansible -b web -m shell -a 'mv -f /tmp/default /etc/nginx/sites-enabled/'
+#ansible -b web -m shell -a 'systemctl restart nginx'
+

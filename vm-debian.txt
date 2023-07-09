@@ -1,0 +1,6 @@
+#nano
+sudo apt install -y nginx
+systemctl status nginx
+curl localhost   #curl <publicIP> - так же работает!
+
+

@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+#L7 load balancer
+#yc alb load-balancer list
+#yc alb load-balancer delete $(yc alb load-balancer list |awk 'NR % 2 == 0' |awk 'NR > 1' |cut -d ' ' -f 4)
+echo "L7 Load Balancers..."
+for NAME in $(yc alb load-balancer list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove L7 load balancer: $NAME"
+  yc alb load-balancer delete $NAME
+done
+yc alb load-balancer list
+
+#HTTP router
+#yc alb http-router list
+#yc alb virtual-host list --http-router-name <http_router_name>
+echo "HTTP Routers..."
+for NAME in $(yc alb http-router list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove http router: $NAME"
+  for NAME2 in $(yc alb virtual-host list --http-router-name $NAME |awk 'NR > 3' |cut -d ' ' -f 2 |head -n -2 |paste -sd ' ')
+  do
+    echo "... ...remove virtual host: $NAME2"
+    yc alb virtual-host delete $NAME2 --http-router-name $NAME
+  done
+  yc alb http-router delete $NAME
+done
+yc alb http-router list
+
+#Backend group
+#yc alb backend-group list
+echo "Backent Groups..."
+for NAME in $(yc alb backend-group list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove backend group: $NAME"
+  yc alb backend-group delete $NAME
+done
+yc alb backend-group list
+
+#Target groups
+#yc alb target-group list
+echo "Target Groups..."
+for NAME in $(yc alb target-group list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove target group: $NAME"
+  yc alb target-group delete $NAME
+done
+yc alb target-group list
+
+#yc compute instance list
+echo "Computer Instances..."
+for NAME in $(yc compute instance list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove computer instance: $NAME"
+  yc compute instance delete $NAME
+done
+yc compute instance list
+

@@ -1,0 +1,94 @@
+#ssh-keygen -t ed25519
+
+#yc compute instance list
+
+WEB_VM_NAME1=WEB_VM1
+WEB_VM_NAME2=WEB_VM2
+
+yc compute instance get $WEB_VM_NAME1
+if [ $? -ne 0 ]; then yc compute instance create   --name $WEB_VM_NAME1   --zone ru-central1-a   --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos01  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub; fi
+
+
+
+yc compute instance create   --name vm-debian   --zone ru-central1-a   --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4  --memory 4GB  --cores 2  --core-fraction 20  --hostname debian01  --preemptible   --create-boot-disk image-folder-id=standard-images,size=20,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub
+
+#IP-адрес ВМ
+yc compute instance get vm-debian |grep -iE "^[ ]{6,8}address: " |sed 's/address://' |xargs
+
+#Подключение к ВМ
+ssh yc-user@130.193.38.21
+
+#Закидываем файлы на ВМ
+#tar czf - Thesis-on-the-Profession/WWW/index.nginx-debian.html | ssh yc-user@130.193.38.21 sudo tar -xvzf -C /var/www/html/index.nginx-debian.html
+#tar czf - Thesis-on-the-Profession/WWW/default | ssh yc-user@130.193.38.21 sudo tar -xvzf -C /etc/nginx/sites-enabled/default
+scp ~/Thesis-on-the-Profession/WWW/index.nginx-debian.html yc-user@$IP_WEB_VM1:/tmp/
+scp ~/Thesis-on-the-Profession/WWW/default yc-user@$IP_WEB_VM1:/tmp/
+
+ansible -b all -m shell -a 'mv -f /tmp/index.nginx-debian.html /var/www/html/'
+ansible -b all -m shell -a 'mv -f /tmp/default /etc/nginx/sites-enabled/'
+ansible -b all -m shell -a 'systemctl restart nginx'  #рестарт nginx
+
+#Забрать файлы с ВМ, если что, можно
+scp yc-user@130.193.38.21:/etc/nginx/sites-enabled/default Thesis-on-the-Profession/WWW/
+scp yc-user@130.193.38.21:/var/www/html/index.nginx-debian.html Thesis-on-the-Profession/WWW/
+
+
+ansible -i hosts all -m ping -u yc-user
+ansible all -m ping
+ansible -b all -m shell -a 'apt update'
+ansible-playbook my.yml
+
+#
+#Target group
+#
+yc vpc subnet list
+yc compute instance list
+yc alb target-group create web-target-group   --target subnet-name=default-ru-central1-a,ip-address=10.128.0.9   --target subnet-name=default-ru-central1-b,ip-address=10.129.0.27
+yc alb target-group list
+yc alb target-group get web-target-group
+yc alb target-group delete web-target-group
+
+#
+#Backend group
+#
+yc alb backend-group create web-backend-group
+yc alb target-group list
+yc application-load-balancer backend-group add-http-backend   --backend-group-name web-backend-group   --name backend1   --weight 1   --port 80   --target-group-id ds797cqi0j37c051a599   --panic-threshold 90   --http-healthcheck port=80,healthy-threshold=10,unhealthy-threshold=15,timeout=10s,interval=2s,path=/
+yc alb backend-group list
+yc alb backend-group delete web-backend-group
+
+#
+#HTTP routers
+#
+yc alb http-router create web-http-router
+yc alb virtual-host create <virtual_host_name> \
+  --http-router-name <HTTP_router_name> \
+  --authority your-domain.foo.com \
+  --modify-request-header name=Accept-Language,append=ru-RU
+
+yc alb http-router list
+yc application-load-balancer virtual-host list --http-router-name web-http-router
+
+yc alb http-router list
+
+#
+#load balancer 
+#
+yc vpc network list
+yc alb load-balancer create my-balancer   --network-name default   --location subnet-name=default-ru-central1-a,zone=ru-central1-a  --location subnet-name=default-ru-central1-b,zone=ru-central1-b
+# Добавить обработчик с http router
+yc alb load-balancer list
+
+yc alb load-balancer autoscale --help
+yc alb load-balancer logging --help
+
+
+#yc alb load-balancer delete <ID or name of the load balancer>
+#yc alb virtual-host delete <virtual_host_name> 
+#yc alb http-router delete <Имя>
+#yc alb backend-group delete web-backend-group
+#yc alb target-group delete <Имя_группы>
+#yc compute instance stop $WEB_VM_NAME1
+#yc compute instance delete $WEB_VM_NAME1
+
+

@@ -1,0 +1,19 @@
+sudo nano /var/www/html/index.nginx-debian.html 
+
+Смотрим и Меняем стартовую страницу
+cat /etc/nginx/nginx.conf        #include /etc/nginx/modules-enabled/*.conf;
+cat /etc/nginx/sites-enabled/default    #root /var/www/html;
+
+Включаем поддержку ssi [модуль ngx_http_ssi_module] (отображаем IP адрес на web сайте)
+cat /etc/nginx/sites-enabled/default
+location / {
+    ssi on;
+    ...
+}
+
+Вставляем на страницу IP-адрес сервера, имя сервера, дату-время
+<p><u>IP Address Nginx Server:</u> <b><font size="+2" color="#ff0000"><!--#echo var="SERVER_ADDR"--></font></b></br>
+<u>Name Nginx Server:</u> <b><font size="+2" color="#ff0000"><!--#echo var="HOSTNAME"--></font></b></p>
+<p><em><!--#echo var="DATE_LOCAL"--></em></p>
+
+
