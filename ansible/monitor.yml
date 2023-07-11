@@ -1,0 +1,27 @@
+---
+- hosts: monitor
+  tasks:
+  - name: Install Prometheus
+    package:
+      name: nginx
+      state: present
+    notify:
+    - Start nginx
+    become: true
+  - name: Copy files
+    copy: src={{ item.0 }} dest={{ item.1 }}
+    with_together:
+      - [ '~/Thesis-on-the-Profession/WWW/default', '~/Thesis-on-the-Profession/WWW/index.nginx-debian.html' ]
+      - [ '/etc/nginx/sites-enabled/', '/var/www/html/' ]
+    become: true
+  - name: "Restart service nginx"
+    service:
+      name: nginx
+      state: restarted
+    retries: 2
+    delay: 2
+    become: true
+  handlers:
+  - name: Start nginx 
+    service: name=nginx state=started
+...
