@@ -9,7 +9,6 @@ VM_NAME=vm-prometheus
 
 ZONE=ru-central1-a
 
-echo [monitor] >> ~/Thesis-on-the-Profession/ansible/hosts
 
 yc compute instance get $VM_NAME &>/dev/null
 if [ $? -ne 0 ]; then
@@ -19,8 +18,10 @@ if [ $? -ne 0 ]; then
         echo "ОШИБКА. ВМ $VM_NAME не создана"
     else
         VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+        echo [monitor] > ~/Thesis-on-the-Profession/ansible/hosts
+        #echo " " >> ~/Thesis-on-the-Profession/ansible/hosts
         echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
-        sleep 20s
+        sleep 25s
     fi 
 else
     echo "ВМ $VM_NAME уже существует"
@@ -31,16 +32,25 @@ sleep 5s
 VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 
 #cd ~/Thesis-on-the-Profession/ansible
-#ansible-playbook web.yml
+#ansible-playbook prometheus.yml
 
-#sleep 1s
+sleep 5s
 
 
 scp ~/Thesis-on-the-Profession/monitoring/prometheus.service yc-user@$VM_IP:/tmp/
-scp ~/Thesis-on-the-Profession/monitoring/prometheus-install yc-user@$VM_IP:/tmp/
+#scp ~/Thesis-on-the-Profession/monitoring/prometheus-install yc-user@$VM_IP:/tmp/
+scp ~/Thesis-on-the-Profession/monitoring/prometheus-install-sudo yc-user@$VM_IP:/tmp/
+###chmod ugo+x /tmp/prometh*
 
 scp ~/Thesis-on-the-Profession/monitoring/node-exporter.service yc-user@$VM_IP:/tmp/
-scp ~/Thesis-on-the-Profession/monitoring/node-exporter-install yc-user@$VM_IP:/tmp/
+#scp ~/Thesis-on-the-Profession/monitoring/node-exporter-install yc-user@$VM_IP:/tmp/
+scp ~/Thesis-on-the-Profession/monitoring/node-exporter-install-sudo yc-user@$VM_IP:/tmp/
+##chmod ugo+x /tmp/node-expor*
+
+scp ~/Thesis-on-the-Profession/monitoring/prometheus.yml yc-user@$VM_IP:/tmp/
+
+#/tmp/prometheus-install-sudo #Без привилегей!
+#/tmp/node-exporter-install #Без привилегей!
 
 #sleep 1s
 

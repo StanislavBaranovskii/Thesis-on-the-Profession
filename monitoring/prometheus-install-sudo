@@ -12,7 +12,8 @@ sudo cp ./prometheus promtool /usr/local/bin/
 sudo cp -R ./console_libraries /etc/prometheus
 sudo cp -R ./consoles /etc/prometheus
 sudo cp ./prometheus.yml /etc/prometheus
-sudo chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+sudo chown -R prometheus:prometheus /etc/prometheus
+sudo chown -R prometheus:prometheus /var/lib/prometheus
 sudo chown prometheus:prometheus /usr/local/bin/prometheus
 sudo chown prometheus:prometheus /usr/local/bin/promtool
 /usr/local/bin/prometheus --config.file /etc/prometheus/prometheus.yml --storage.tsdb.path /var/lib/prometheus/ --web.console.templates=/etc/prometheus/consoles --web.console.libraries=/etc/prometheus/console_libraries
@@ -21,5 +22,5 @@ sudo cp /tmp/prometheus.service /etc/systemd/system/prometheus.service
 
 sudo systemctl enable prometheus.service
 sudo systemctl start prometheus.service
-sudo systemctl status prometheus.service
+#systemctl status prometheus.service
 

@@ -37,3 +37,12 @@ sudo systemctl enable node-exporter
 sudo systemctl start node-exporter
 sudo systemctl status node-exporter
 
+######################################################
+#
+Доступ к web интерфейсу prometheus:
+<Внешний_IP>:9090
+
+Доступ к web интрфейсу node-exporter:
+<Внешний_IP>:9100
+
+
