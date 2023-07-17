@@ -1,5 +1,11 @@
 #!/bin/bash
 #
+
+
+
+
+
+
 #L7 load balancer
 #yc alb load-balancer list
 #yc alb load-balancer delete $(yc alb load-balancer list |awk 'NR % 2 == 0' |awk 'NR > 1' |cut -d ' ' -f 4)
@@ -55,4 +61,25 @@ do
   yc compute instance delete $NAME
 done
 yc compute instance list
+
+
+
+
+#Docker-образы
+echo "Docker-образы..."
+for NAME in $(yc container image list |awk 'NR > 3' |cut -d ' ' -f 6 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove Docker-образы: $NAME"
+  yc container image delete $NAME
+done
+yc container image list
+
+#Container Registry
+echo "Container Registry..."
+for NAME in $(yc container registry list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove Container Registry: $NAME"
+  yc container registry delete $NAME
+done
+yc container registry list
 

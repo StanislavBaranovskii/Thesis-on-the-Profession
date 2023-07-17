@@ -91,4 +91,22 @@ yc alb load-balancer logging --help
 #yc compute instance stop $WEB_VM_NAME1
 #yc compute instance delete $WEB_VM_NAME1
 
+##################################################################################
+#Docker
+
+yc container registry list
+yc container registry create --name my-reg
+yc container registry get my-reg
+
+yc container registry delete my-reg
+
+
+
+yc container image list
+yc container image scan <ID Docker-образа>
+yc container image list-vulnerabilities --scan-result-id=<ID результатов сканирования>
+
+
+yc container registry create --name my-reg
+sudo docker build .   -t cr.yandex/my-reg/ubuntu:hello
 
