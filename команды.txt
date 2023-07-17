@@ -110,3 +110,9 @@ yc container image list-vulnerabilities --scan-result-id=<ID результат�
 yc container registry create --name my-reg
 sudo docker build .   -t cr.yandex/my-reg/ubuntu:hello
 
+docker image list
+docker tag alpine cr.yandex/crp12jhlkptdfuvv0qcs/ubuntu:hello
+#docker tag ubuntu cr.yandex/crp12jhlkptdfuvv0qcs/ubuntu:hello
+yc container image list
+
+

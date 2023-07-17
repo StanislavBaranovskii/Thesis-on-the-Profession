@@ -67,7 +67,7 @@ yc compute instance list
 
 #Docker-образы
 echo "Docker-образы..."
-for NAME in $(yc container image list |awk 'NR > 3' |cut -d ' ' -f 6 |head -n -2 |paste -sd ' ')
+for NAME in $(yc container image list |awk 'NR > 3' |cut -d ' ' -f 2 |head -n -2 |paste -sd ' ')
 do
   echo "...remove Docker-образы: $NAME"
   yc container image delete $NAME
