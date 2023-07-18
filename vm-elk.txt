@@ -4,11 +4,37 @@
 sudo update
 #sudo snap install docker
 #snap info docker
-sudo apt install docker.io
+sudo apt install -y docker.io
+sudo apt install -y docker-compose
 
+#Без sudo работать с docker (к docker-compose не относиться!)
+#
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
 
+sudo docker search kibana
+sudo docker search elasticsearch
+sudo docker search filebeat
 
+sudo docker pull bitnami/elasticsearch:7.17.9
+sudo docker pull bitnami/kibana:7.17.9
+sudo docker pull elastic/filebeat:7.17.9
 
+sudo docker image ls
+
+sudo docker-compose config
+
+curl -X GET 'elasticsearch_IP:9200/_cluster/health?pretty
+
+docker ps -a
+docker exec -it id_контейнера bash_команда
+docker exec -it id_контейнера_filebeat filebeat test config
+#docker exec -u root -it d41edc175ac8  touch ttt
+docker exec -u root -it d41edc175ac8 chown root filebeat.yml
+#docker exec -u root -it d41edc175ac8 chrgp root filebeat.yml
+docker exec -u root -it d41edc175ac8 chmod go-w  filebeat.yml
+docker exec -u root -it d41edc175ac8  filebeat test config
 
 
 # Установка в докере
@@ -28,4 +54,9 @@ sysctl -w vm.max_map_count=262144
 
 
 
-docker pull distribution/registry:master
+#docker pull distribution/registry:master
+
+
+
+
+
