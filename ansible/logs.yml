@@ -1,0 +1,48 @@
+---
+- name: Elastiksearch+Kibana
+  hosts: logs
+  become: true
+  
+  tasks:
+  - name: Docker install
+    ansible.builtin.apt:
+      name: docker.io
+      state: present
+      allow_downgrade: yes
+      update_cache: yes
+      cache_valid_time: 3600
+  
+  - name: Docker-compose install
+    ansible.builtin.apt:
+      name: docker-compose
+      state: present
+      allow_downgrade: yes
+      update_cache: yes
+      cache_valid_time: 3600
+
+- name: Elastiksearch
+  hosts: vm-elastik
+  become: true
+  
+  tasks:
+  - name: Elastiksearch docker-compose.yaml copy
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/logs/elastik-docker-compose.yaml
+      dest: /tmp/elastik-docker-compose.yaml
+      
+  - name: Elastiksearch docker up
+    ansible.builtin.shell: docker-compose -f /tmp/elastik-docker-compose.yaml up&
+    
+- name: Kibana
+  hosts: vm-kibana
+  become: true
+  
+  tasks:
+  - name: Kibana docker-compose.yaml copy
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/logs/kibana-docker-compose.yaml
+      dest: /tmp/kibana-docker-compose.yaml
+      
+  - name: Kibana docker up
+    ansible.builtin.shell: docker-compose -f /tmp/kibana-docker-compose.yaml up&
+...

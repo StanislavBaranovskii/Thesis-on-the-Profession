@@ -1,2 +1,3 @@
-[monitor]
-vm-prometheus ansible_host=158.160.114.66 ansible_connection=ssh ansible_ssh_user=yc-user
+[logs]
+vm-elastik ansible_host=158.160.104.228 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-kibana ansible_host=158.160.64.218 ansible_connection=ssh ansible_ssh_user=yc-user

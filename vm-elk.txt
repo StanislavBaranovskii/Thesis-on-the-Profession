@@ -25,6 +25,8 @@ sudo docker image ls
 
 sudo docker-compose config
 
+sudo docker-compose up
+
 curl -X GET 'elasticsearch_IP:9200/_cluster/health?pretty
 
 docker ps -a
