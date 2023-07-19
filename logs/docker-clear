@@ -1,10 +1,11 @@
+#docker network prune -f
 #docker rm -f $(docker ps –aq)
-docker container rm -f $(docker container ls -aq)
-#docker image prune
-docker image rm $(docker image ls -q)
-#docker volume prune
-docker volume rm $(docker volume ls -q)
-docker builder prune
-
+#docker container rm -f $(docker container ls -aq)
+docker container prune -f
+docker image prune -af
+#docker image rm -f $(docker image ls -q)
+docker volume prune -af
+#docker volume rm $(docker volume ls -q)
+docker builder prune -af
 docker system prune -a -f
 
