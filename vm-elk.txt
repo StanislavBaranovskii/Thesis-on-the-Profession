@@ -27,7 +27,12 @@ sudo docker-compose config
 
 sudo docker-compose up
 
-curl -X GET 'elasticsearch_IP:9200/_cluster/health?pretty
+curl -X GET "elasticsearch_IP:9200/_cluster/health?pretty"
+curl kibana_IP:5601
+curl -s -I http://kibana_IP:5601 | grep -q 'HTTP/1.1 302 Found'
+
+sudo docker service logs -f 
+
 
 docker ps -a
 docker exec -it id_контейнера bash_команда
