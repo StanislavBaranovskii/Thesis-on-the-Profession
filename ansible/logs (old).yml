@@ -29,16 +29,9 @@
     ansible.builtin.copy:
       src: ~/Thesis-on-the-Profession/logs/elastik-docker-compose.yaml
       dest: /tmp/elastik-docker-compose.yaml
-
-  - name: Elastiksearch docker pull
-    ansible.builtin.command: docker-compose -f /tmp/elastik-docker-compose.yaml pull
-    
-  - name: Elastiksearch docker create
-    ansible.builtin.command: docker-compose -f /tmp/elastik-docker-compose.yaml up --no-start
-    
-  - name: Elastiksearch docker start
-    ansible.builtin.shell: docker-compose -f /tmp/elastik-docker-compose.yaml start
-
+      
+  - name: Elastiksearch docker up
+    ansible.builtin.shell: docker-compose -f /tmp/elastik-docker-compose.yaml up&
     
 - name: Kibana
   hosts: vm-kibana
@@ -48,15 +41,8 @@
   - name: Kibana docker-compose.yaml copy
     ansible.builtin.copy:
       src: ~/Thesis-on-the-Profession/logs/kibana-docker-compose.yaml
-      dest: /tmp/kibana-docker-compose.yaml 
-  
-  - name: Kibana docker pull
-    ansible.builtin.command: docker-compose -f /tmp/kibana-docker-compose.yaml pull
-    
-  - name: Kibana docker create
-    ansible.builtin.command: docker-compose -f /tmp/kibana-docker-compose.yaml up --no-start
-    
-  - name: Kibana docker start
-    ansible.builtin.shell: docker-compose -f /tmp/kibana-docker-compose.yaml start
-
+      dest: /tmp/kibana-docker-compose.yaml
+      
+  - name: Kibana docker up
+    ansible.builtin.shell: docker-compose -f /tmp/kibana-docker-compose.yaml up&
 ...

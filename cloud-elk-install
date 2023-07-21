@@ -26,10 +26,9 @@ do
 
     VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
     echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
-    ZONE=ru-central1-b
 done
 
-sleep 25s
+sleep 30s
 
 #cd ~/Thesis-on-the-Profession/logs
 echo "version: '3.7'
@@ -38,12 +37,25 @@ services:
   kibana:
     container_name: kibana
     image: bitnami/kibana:7.17.9
-    environment:" > ~/Thesis-on-the-Profession/logs/kibana-docker-compose.yaml
-echo "      - ELASTICSEARCH_HOSTS=http://$(yc compute instance get $LOGS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):9200
+  enviroment:" > ~/Thesis-on-the-Profession/logs/kibana-docker-compose.yaml
+echo "      - ELASTICSEARCH_HOSTS: \"http://$(yc compute instance get $LOGS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):9200\"
+      - xpack.security.enabled: 'false'
+      - xpack.monitoring.enabled: 'false'
+      - xpack.watcher.enabled: 'false'
+      - xpack.ml.enabled: 'false'
     ports:
       - 5601:5601" >> ~/Thesis-on-the-Profession/logs/kibana-docker-compose.yaml
 
 
+
+
+#echo "server.host: \"$(yc compute instance get $LOGS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):9200\"" > ~/Thesis-on-the-Profession/logs/kibana.yml
+#echo "server.publicBaseUrl: \"http://$(yc compute instance get $LOGS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):5601/\"" >> ~/Thesis-on-the-Profession/logs/kibana.yml
+#echo "elasticsearch.hosts: \"http://$(yc compute instance get $LOGS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):9200\"" >> ~/Thesis-on-the-Profession/logs/kibana.yml
+
+
+
+sleep 1s
 
 cd ~/Thesis-on-the-Profession/ansible
 ansible-playbook logs.yml

@@ -23,15 +23,23 @@ sudo docker pull elastic/filebeat:7.17.9
 
 sudo docker image ls
 
-sudo docker-compose config
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml config
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml up --no-start
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml start
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml stop
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml rm -f
 
-sudo docker-compose up
+https://habr.com/ru/articles/540606/#roles_and_users
+
+
+
 
 curl -X GET "elasticsearch_IP:9200/_cluster/health?pretty"
 curl kibana_IP:5601
 curl -s -I http://kibana_IP:5601 | grep -q 'HTTP/1.1 302 Found'
 
 sudo docker service logs -f 
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml logs -f
 
 
 docker ps -a
