@@ -1,3 +1,3 @@
 [logs]
-vm-elastik ansible_host=84.201.133.110 ansible_connection=ssh ansible_ssh_user=yc-user
-vm-kibana ansible_host=158.160.50.89 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-elastik ansible_host=51.250.95.216 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-kibana ansible_host=158.160.47.238 ansible_connection=ssh ansible_ssh_user=yc-user

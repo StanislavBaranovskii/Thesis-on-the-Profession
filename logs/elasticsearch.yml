@@ -1,0 +1,13 @@
+discovery.type: single-node
+network.host: 0.0.0.0
+http.port: 9200
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+bootstrap.memory_lock: true
+xpack.security.enabled: true
+xpack.license.self_generated.type: basic
+#xpack.security.http.ssl.enabled: true
+#xpack.security.http.ssl.keystore.path: "/elasticsearch/http.p12"
+#xpack.security.transport.ssl.verification_mode: certificate
+#xpack.security.transport.ssl.keystore.path: certs/elastic-certificates.p12
+#xpack.security.transport.ssl.truststore.path: certs/elastic-certificates.p12

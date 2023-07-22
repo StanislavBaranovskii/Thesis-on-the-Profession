@@ -3,8 +3,8 @@ version: '3.7'
 services:
   # Elasticsearch Docker Images: https://www.docker.elastic.co/
   elasticsearch:
-    image: bitnami/elasticsearch:7.17.9
-    container_name: elasticsearch
+    image: bitnami/elasticsearch:7.17.11
+    container_name: elasticsearch111
     environment:
       - xpack.security.enabled=false
       - discovery.type=single-node
@@ -25,16 +25,17 @@ services:
 
   kibana:
     container_name: kibana
-    image: bitnami/kibana:7.17.9
+    image: bitnami/kibana:7.17.11
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_HOSTS=http://elasticsearch11:9200
+      - SERVER_HOSTS=192.168.1.148
     ports:
       - 5601:5601
     depends_on:
       - elasticsearch
 
   filebeat:
-    image: elastic/filebeat:7.17.9
+    image: elastic/filebeat:7.17.11
     command: --strict.perms=false
     user: filebeat
     volumes:

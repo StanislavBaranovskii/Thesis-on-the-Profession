@@ -47,13 +47,19 @@
       echo: true
       command: /usr/share/elasticsearch/bin/elasticsearch-setup-passwords interactive
       responses:
-        (.*)Please confirm that you would like to continue(.*): "y"
-        (.*)elastic(.*): "elastic"
-        (.*)apm_system(.*): "elastic"
-        (.*)kibana_system(.*): "elastic"
-        (.*)logstash_system(.*): "elastic"
-        (.*)beats_system(.*): "elastic"
-        (.*)remote_monitoring_user(.*): "elastic"
+        (.*)Please confirm that you would like to continue (.*): "y"
+        'Enter password for [elastic]: ': "elastic"
+        (.*)Reenter password for [elastic](.*): "elastic"
+        Enter password for [apm_system](.*): "elastic"
+        Reenter password for [apm_system](.*): "elastic"
+        Enter password for [kibana_system](.*): "elastic"
+        Reenter password for [kibana_system](.*): "elastic"
+        Enter password for [logstash_system](.*): "elastic"
+        Reenter password for [logstash_system](.*): "elastic"
+        Enter password for [beats_system](.*): "elastic"
+        Reenter password for [beats_system](.*): "elastic"
+        Enter password for [remote_monitoring_user](.*): "elastic"
+        Reenter password for [remote_monitoring_user](.*): "elastic"
         
     
 - name: Kibana

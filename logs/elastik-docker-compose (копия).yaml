@@ -3,24 +3,21 @@ version: '3.7'
 services:
   # Elasticsearch Docker Images: https://www.docker.elastic.co/
   elasticsearch:
-    image: bitnami/elasticsearch:7.17.11
+    image: bitnami/elasticsearch:7.17.9
     container_name: elasticsearch
     environment:
-      - XPACK_SECURITY_ENABLED=false
-      - DISCOVERY_TYPE=single-node
-      - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=123kibana
-      - NETWORK_HOST=0.0.0.0
-      - TRANSPORT_HOST=0.0.0.0
-      - NETWORK_BIND_HOST=0.0.0.0
-      - NETWORK_PUBLISH_HOST=0.0.0.0
-      - HTTP_HOST=0.0.0.0
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - network.host=84.201.133.110
+      - transport.host=84.201.133.110
+      - network.bind_host=0.0.0.0
+      - network.publish_host=0.0.0.0
+      - http.host=0.0.0.0
       - http.cors.enabled=true
       - http.cors.allow-origin=*
       - http.cors.allow-methods=OPTIONS, HEAD, GET, POST, PUT, DELETE
       - http.cors.allow-headers=X-Requested-With, X-Auth-Token, Content-Type, Content-Length, Authorization, Access-Control-Allow-Headers, Accept, x-elastic-client-meta
       - http.cors.allow-credentials=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
       memlock:
         soft: -1

@@ -1,0 +1,77 @@
+#####################
+#
+#
+sudo update
+#sudo snap install docker
+#snap info docker
+sudo apt install -y docker.io
+sudo apt install -y docker-compose
+
+#Без sudo работать с docker (к docker-compose не относиться!)
+#
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+
+sudo docker search kibana
+sudo docker search elasticsearch
+sudo docker search filebeat
+
+sudo docker pull bitnami/elasticsearch:7.17.9
+sudo docker pull bitnami/kibana:7.17.9
+sudo docker pull elastic/filebeat:7.17.9
+
+sudo docker image ls
+
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml config
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml up --no-start
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml start
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml stop
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml rm -f
+
+https://habr.com/ru/articles/540606/#roles_and_users
+
+
+
+
+curl -X GET "elasticsearch_IP:9200/_cluster/health?pretty"
+curl kibana_IP:5601
+curl -s -I http://kibana_IP:5601 | grep -q 'HTTP/1.1 302 Found'
+
+sudo docker service logs -f 
+sudo docker-compose -f /tmp/kibana-docker-compose.yaml logs -f
+
+
+docker ps -a
+docker exec -it id_контейнера bash_команда
+docker exec -it id_контейнера_filebeat filebeat test config
+#docker exec -u root -it d41edc175ac8  touch ttt
+docker exec -u root -it d41edc175ac8 chown root filebeat.yml
+#docker exec -u root -it d41edc175ac8 chrgp root filebeat.yml
+docker exec -u root -it d41edc175ac8 chmod go-w  filebeat.yml
+docker exec -u root -it d41edc175ac8  filebeat test config
+
+
+# Установка в докере
+docker pull docker.elastic.co/elasticsearch/elasticsearch:7.17.11
+
+docker run --group-add 0 -p 127.0.0.1:9200:9200 -p 127.0.0.1:9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.17.11
+-e "bootstrap.memory_lock=true" --ulimit memlock=-1:-1 --ulimit nofile=65535:65535
+
+curl -X GET "localhost:9200/_cat/nodes?v=true&pretty"
+
+grep vm.max_map_count /etc/sysctl.conf
+vm.max_map_count=262144
+sysctl -w vm.max_map_count=262144
+
+#настройте его, установив discovery.type значение single-node;в этой ситуации узел выберет себя ведущим и не будет присоединяться к кластеру с каким-либо другим узлом.
+#-v full_path_to/custom_elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+
+
+
+#docker pull distribution/registry:master
+
+
+
+
+
