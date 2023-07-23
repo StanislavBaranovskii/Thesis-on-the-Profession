@@ -13,7 +13,8 @@ sudo ./elasticsearch-setup-passwords interactive
 curl -u 'elastic' http://localhost:9200/_aliases
 curl -u 'kibana_system' http://158.160.40.130:5601
 
-
+curl -XGET 'localhost:5066/stats'
+curl -XGET 'filebeat_IP:5066/stats'
 
 sudo journalctl -xe
 

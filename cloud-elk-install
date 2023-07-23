@@ -5,7 +5,7 @@
 
 #yc compute instance list
 
-LOGS_VM1_NAME=vm-elastik
+LOGS_VM1_NAME=vm-elastic
 LOGS_VM2_NAME=vm-kibana
 
 ZONE=ru-central1-a
@@ -30,16 +30,66 @@ done
 
 sleep 30s
 
-#scp ~/packages/elasticsearch-7.17.11-amd64.deb yc-user@$(yc compute instance get $LOGS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):/tmp/
-#scp ~/packages/kibana-7.17.11-amd64.deb yc-user@$(yc compute instance get $LOGS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):/tmp/
+IP_ELASTIC=$(yc compute instance get $LOGS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+IP_KIBANA=$(yc compute instance get $LOGS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+
+#scp ~/packages/elasticsearch-7.17.11-amd64.deb yc-user@$IP_ELASTIC:/tmp/
+#scp ~/packages/kibana-7.17.11-amd64.deb yc-user@$IP_KIBANA:/tmp/
 
 echo "server.port: 5601
 server.host: \"0.0.0.0\"" > ~/Thesis-on-the-Profession/logs/kibana.yml
-echo "elasticsearch.hosts: [\"http://$(yc compute instance get $LOGS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):9200\"]" >> ~/Thesis-on-the-Profession/logs/kibana.yml
-echo "server.publicBaseUrl: \"http://$(yc compute instance get $LOGS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs):5601/\"
+echo "elasticsearch.hosts: [\"http://$IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/kibana.yml
+echo "server.publicBaseUrl: \"http://$IP_KIBANA:5601/\"
 elasticsearch.username: \"kibana_system\"
 elasticsearch.password: \"elastic\"" >> ~/Thesis-on-the-Profession/logs/kibana.yml
 
+
+echo "filebeat.inputs:
+- type: filestream
+  id: my-filestream-id
+  enabled: false
+  paths:
+    - /var/log/*.log
+
+# ============================== Filebeat modules ==============================
+filebeat.config.modules:
+  path: \${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+# ======================= Elasticsearch template setting =======================
+setup.template.settings:
+  index.number_of_shards: 1
+
+# ================================= Dashboards =================================
+setup.dashboards.enabled: true
+
+# =================================== Kibana ===================================
+setup.kibana:" > ~/Thesis-on-the-Profession/logs/filebeat.yml
+
+echo "  host: \"http://$IP_KIBANA:5601\"
+" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
+
+echo "# ================================== Outputs ===================================
+
+# ---------------------------- Elasticsearch Output ----------------------------
+output.elasticsearch:" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
+
+echo "  hosts: [\"$IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
+
+echo "  username: \"elastic\"
+  password: \"elastic\"
+
+# ================================= Processors =================================
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+
+# ============================= X-Pack Monitoring ==============================
+monitoring.enabled: true
+" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
 
 
 sleep 1s

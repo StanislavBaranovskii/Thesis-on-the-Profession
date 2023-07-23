@@ -10,7 +10,7 @@ WEB_VM2_NAME=vm-web2
 
 ZONE=ru-central1-a
 
-echo [web] > ~/Thesis-on-the-Profession/ansible/hosts
+echo [web] >> ~/Thesis-on-the-Profession/ansible/hosts
 
 for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
 do
@@ -29,10 +29,15 @@ do
     ZONE=ru-central1-b
 done
 
-sleep 25s
+
+
+sleep 30s
+
+IP_WEB1=$(yc compute instance get $WEB_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+IP_WEB2=$(yc compute instance get $WEB_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 
 cd ~/Thesis-on-the-Profession/ansible
-ansible-playbook my.yml
+ansible-playbook web.yml
 
 #sleep 1s
 
