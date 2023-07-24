@@ -5,14 +5,19 @@
 
 #yc compute instance list
 
-WEB_VM1_NAME=vm-web1
-WEB_VM2_NAME=vm-web2
+#
+# Запускать после разворачивания WEB
+#
+
+MONS_VM1_NAME=vm-prometheus
+MONS_VM2_NAME=vm-grafana
 
 ZONE=ru-central1-a
 
-echo [web] > ~/Thesis-on-the-Profession/ansible/hosts
+echo [mons] > ~/Thesis-on-the-Profession/ansible/hosts
 
-for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
+for VM_NAME in $MONS_VM1_NAME $MONS_VM2_NAME
+#for VM_NAME in $MONS_VM1_NAME
 do
     yc compute instance get $VM_NAME &>/dev/null
     if [ $? -ne 0 ]; then
@@ -26,30 +31,30 @@ do
 
     VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
     echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
-    ZONE=ru-central1-b
 done
-
 
 
 sleep 30s
 
-IP_WEB1=$(yc compute instance get $WEB_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
-IP_WEB2=$(yc compute instance get $WEB_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+IP_PROMET=$(yc compute instance get $MONS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+IP_GRAFAN=$(yc compute instance get $MONS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 
+
+sleep 1s
 cd ~/Thesis-on-the-Profession/ansible
-ansible-playbook web.yml
+ansible-playbook monitoring.yaml
 
-#sleep 1s
 
-#tar czf - ~/Thesis-on-the-Profession/WWW/index.nginx-debian.html | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /var/www/html/index.nginx-debian.html
-#scp ~/Thesis-on-the-Profession/WWW/index.nginx-debian.html yc-user@$IP_WEB_VM1:/tmp/
+#scp ~/Thesis-on-the-Profession/monitoring/prometheus.service yc-user@$IP_PROMET:/tmp/
+#scp ~/Thesis-on-the-Profession/monitoring/prometheus-install-sudo yc-user@$IP_PROMET:/tmp/
+###chmod ugo+x /tmp/prometh*
 
-#tar czf - ~/Thesis-on-the-Profession/WWW/default | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /etc/nginx/sites-enabled/default
-#scp ~/Thesis-on-the-Profession/WWW/default yc-user@$IP_WEB_VM1:/tmp/
+#scp ~/Thesis-on-the-Profession/monitoring/node-exporter.service yc-user@$IP_PROMET:/tmp/
+#scp ~/Thesis-on-the-Profession/monitoring/node-exporter-install-sudo yc-user@$IP_PROMET:/tmp/
+##chmod ugo+x /tmp/node-expor*
 
-#sleep 1s
+#scp ~/Thesis-on-the-Profession/monitoring/prometheus.yml yc-user@$IP_PROMET:/tmp/
 
-#ansible -b web -m shell -a 'mv -f /tmp/index.nginx-debian.html /var/www/html/'
-#ansible -b web -m shell -a 'mv -f /tmp/default /etc/nginx/sites-enabled/'
-#ansible -b web -m shell -a 'systemctl restart nginx'
+#/tmp/prometheus-install-sudo #Без привилегей!
+#/tmp/node-exporter-install #Без привилегей!
 

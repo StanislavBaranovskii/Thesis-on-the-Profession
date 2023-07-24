@@ -24,10 +24,11 @@ sudo systemctl status prometheus.service
 
 ######################################################
 #
-wget https://github.com/prometheus/node_exporter/releases/download/v1.6.0/node_exporter-1.6.0.linux-amd64.tar.gz
+#wget https://github.com/prometheus/node_exporter/releases/download/v1.6.0/node_exporter-1.6.0.linux-amd64.tar.gz
+wget https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
 #wget https://github.com/prometheus/node_exporter/releases/download/v1.6.0/node_exporter-1.6.0.linux-386.tar.gz
-tar xvfz node_exporter-1.6.0.linux-amd64.tar.gz
-cd cd node_exporter-1.6.0.linux-amd64/
+tar xvfz node_exporter-1.6.1.linux-amd64.tar.gz
+cd cd node_exporter-1.6.1.linux-amd64/
 ./node_exporter  #Проверяем доступность : http://127.0.0.1:9100/metrics
 sudo mkdir /etc/prometheus/node-exporter
 sudo cp ./* /etc/prometheus/node-exporter
@@ -42,7 +43,10 @@ sudo systemctl status node-exporter
 Доступ к web интерфейсу prometheus:
 <Внешний_IP>:9090
 
-Доступ к web интрфейсу node-exporter:
+Доступ к web интерфейсу node-exporter:
 <Внешний_IP>:9100
 
+Доступность prometheus-nginxlog-exporter:
+<Внешний_IP>:4040
+404 page not found
 

@@ -15,3 +15,12 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090', 'localhost:9100']
 
+  - job_name: "web1"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['84.201.156.246:9100', '84.201.156.246:4040']
+
+  - job_name: "web2"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['84.201.156.247:9100', '84.201.156.247:4040']

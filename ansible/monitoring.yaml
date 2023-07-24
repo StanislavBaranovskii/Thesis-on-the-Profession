@@ -1,0 +1,127 @@
+---
+- name: Prometheus and Node-exporter Prometheus-nginxlog-exporter
+  hosts: vm-prometheus
+#  become: true
+  
+  tasks:
+  
+  - name: Copy script install prometheus
+    copy:
+      src: ~/Thesis-on-the-Profession/monitoring/prometheus-install-sudo
+      dest: /tmp/
+      owner: yc-user
+      group: yc-user
+      mode: u+x,g+x,o+x
+
+#  - name: Copy prometheus.yml file
+#    become: true
+#    copy:
+#      src: ~/Thesis-on-the-Profession/monitoring/prometheus.yml
+#      dest: /etc/prometheus/
+#      owner: prometheus
+#      group: prometheus
+#      mode: '0644'
+
+#  - name: Copy prometheus.service file
+#    become: true
+#    copy:
+#      src: ~/Thesis-on-the-Profession/monitoring/prometheus.service
+#      dest: /etc/systemd/system/
+
+  - name: Copy prometheus.yml & rometheus.service files
+    copy: src={{ item.0 }} dest={{ item.1 }}
+    with_together:
+      - [ '~/Thesis-on-the-Profession/monitoring/prometheus.service', '~/Thesis-on-the-Profession/monitoring/prometheus.yml' ]
+      - [ '/tmp/', '/tmp/' ]
+
+  - name: Install prometheus (start script install)
+    ansible.builtin.command: ./prometheus-install-sudo
+    args:
+      chdir: /tmp/
+#########################################
+
+  - name: Copy script install node-exporter-install-sudo
+    copy:
+      src: ~/Thesis-on-the-Profession/monitoring/node-exporter-install-sudo
+      dest: /tmp/
+      owner: yc-user
+      group: yc-user
+      mode: u+x,g+x,o+x
+
+#  - name: Copy node-exporter.service file
+#    become: true
+#    copy:
+#      src: ~/Thesis-on-the-Profession/monitoring/node-exporter.service
+#      dest: /etc/systemd/system/
+
+  - name: Copy node-exporter.service file
+    copy:
+      src: ~/Thesis-on-the-Profession/monitoring/node-exporter.service
+      dest: /tmp/
+      owner: yc-user
+      group: yc-user
+
+  - name: Install node-exporter (start script install)
+    ansible.builtin.command: ./node-exporter-install-sudo
+    args:
+      chdir: /tmp/
+
+#########################################
+#  - name: Restart service prometheus
+#    become: true
+#    ansible.builtin.service:
+#      name: prometheus
+#      state: restarted
+
+#  - name: Checking service status
+#    become: true
+#    ansible.builtin.command: systemctl status "{{ item }}"
+#    with_items:
+#    - prometheus
+#    - node-exporter
+#    register: result
+#    ignore_errors: yes
+    
+#  - name: showing report
+#    debug:
+#     var: result
+
+  - name: Push prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+    ansible.builtin.shell: wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.9.2/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb -O /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+
+  - name: Install prometheus-nginxlog-exporter
+    become: true
+    ansible.builtin.apt:
+      deb: /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+      
+  - name: Start service prometheus-nginxlog-exporter
+    become: true
+    ansible.builtin.service:
+      name: prometheus-nginxlog-exporter
+      state: start
+
+###########################################
+- name: Grafana
+  hosts: vm-grafana
+  become: true
+
+  tasks:
+  - name: Update apt cache
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+
+  - name: Fix-broken apt (for install libfontconfig1)
+    ansible.builtin.shell: apt --fix-broken install -y
+
+  - name: Install the package "libfontconfig1" (for grafana)
+    ansible.builtin.apt:
+      name: libfontconfig1
+    
+  - name: Push grafana_9.5.6_amd64.deb
+    ansible.builtin.shell: wget https://dl.grafana.com/oss/release/grafana_9.5.6_amd64.deb -O /tmp/grafana_9.5.6_amd64.deb
+
+  - name: Install grafana
+    ansible.builtin.shell: dpkg -i grafana_9.5.6_amd64.deb
+
+...
