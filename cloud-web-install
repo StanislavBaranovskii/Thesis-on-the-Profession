@@ -36,8 +36,38 @@ sleep 30s
 IP_WEB1=$(yc compute instance get $WEB_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 IP_WEB2=$(yc compute instance get $WEB_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 
+
+echo "global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+
+rule_files:
+
+scrape_configs:
+  - job_name: \"prometheus\"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090', 'localhost:9100']
+
+  - job_name: \"web1\"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['$IP_WEB1:9100', '$IP_WEB1:4040']
+
+  - job_name: \"web2\"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['$IP_WEB2:9100', '$IP_WEB2:4040']" > ~/Thesis-on-the-Profession/monitoring/prometheus.yml
+
+    
+
 cd ~/Thesis-on-the-Profession/ansible
-ansible-playbook web.yml
+ansible-playbook web.yaml
 
 #sleep 1s
 

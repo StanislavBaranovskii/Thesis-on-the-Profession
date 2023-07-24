@@ -1,0 +1,141 @@
+---
+- name: nginx
+  hosts: web
+  tasks:
+  - name: Install nginx
+    package:
+      name: nginx
+      state: present
+    notify:
+    - Start nginx
+    become: true
+
+  - name: Copy files
+    copy: src={{ item.0 }} dest={{ item.1 }}
+    with_together:
+      - [ '~/Thesis-on-the-Profession/WWW/default', '~/Thesis-on-the-Profession/WWW/index.nginx-debian.html' ]
+      - [ '/etc/nginx/sites-enabled/', '/var/www/html/' ]
+    become: true
+
+  - name: "Restart service nginx"
+    service:
+      name: nginx
+      state: restarted
+    retries: 2
+    delay: 2
+    become: true
+  
+  handlers:
+  - name: Start nginx 
+    service: name=nginx state=started
+    
+- name: filebeat
+  hosts: web
+  become: true
+  
+  tasks:
+  - name: Push filebeat-7.17.11-amd64.deb
+    ansible.builtin.copy:
+      src: ~/packages/filebeat-7.17.11-amd64.deb
+      #src: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
+      dest: /tmp/filebeat-7.17.11-amd64.deb
+      remote_src: false
+      mode: preserve
+
+#  - name: Push filebeat-7.17.11-amd64.deb (https://getfile.dokpub.com/yandex/)
+#    ansible.builtin.shell: wget "https://downloader.disk.yandex.ru/disk/71cbd314f3a93d081659aaa29e78a1509d8390ab98c7159a0c82bf1b7b340191/64bd472c/ZlD-p3FW65j3wh3XWywyYVj77tm-28Yix84Y5tZLDRLNWWMN18FUSwy2KWtxwWmPU5OtbCMHVynMWF80aLAung%3D%3D?uid=1712584571&filename=filebeat-7.17.11-amd64.deb&disposition=attachment&hash=&limit=0&content_type=application%2Fvnd.debian.binary-package&owner_uid=1712584571&fsize=35833358&hid=85e0c054db9792e0c99fa807151109c5&media_type=compressed&tknv=v2&etag=e8e48e992b9d7cc3b7102cf1a1b2aab8" -O /tmp/filebeat-7.17.11-amd64.deb
+
+  - name: Install filebeat
+    ansible.builtin.apt:
+      deb: /tmp/filebeat-7.17.11-amd64.deb
+      #deb: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
+
+  - name: Copy filebeat.yml
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/logs/filebeat.yml
+      dest: /etc/filebeat/filebeat.yml
+      mode: '0600'
+      
+  - name: Copy nginx.yml.disabled
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/logs/nginx.yml.disabled
+      dest: /etc/filebeat/modules.d/nginx.yml.disabled
+      mode: preserve
+
+  - name: Enable nginx module - copy nginx.yml.disabled to nginx.yml
+    ansible.builtin.copy:
+      remote_src: true
+      src: /etc/filebeat/modules.d/nginx.yml.disabled
+      dest: /etc/filebeat/modules.d/nginx.yml
+
+  - name: Enable nginx module - remove nginx.yml.disabled
+    ansible.builtin.file:
+      path: /etc/filebeat/modules.d/nginx.yml.disabled
+      state: absent
+#
+#  - name: Enable nginx module
+#    ansible.builtin.command: filebeat modules enabled nginx
+
+  - name: Enable service filebeat
+    ansible.builtin.service:
+      name: filebeat.service
+      enabled: yes
+  
+  - name: Start service filebeat
+    ansible.builtin.service:
+      name: filebeat.service
+      state: started
+
+#Kibana must be running and reachable
+#  - name: Setup dashboards in kibana
+#    ansible.builtin.command: filebeat setup --dashboards
+
+- name: node-exporter
+  hosts: web
+  tasks:
+
+  - name: Copy script install node-exporter-install-sudo
+    copy:
+      src: ~/Thesis-on-the-Profession/monitoring/node-exporter-install-sudo
+      dest: /tmp/
+      owner: yc-user
+      group: yc-user
+      mode: u+x,g+x,o+x
+
+#  - name: Copy node-exporter.service file
+#    become: true
+#    copy:
+#      src: ~/Thesis-on-the-Profession/monitoring/node-exporter.service
+#      dest: /etc/systemd/system/
+
+  - name: Copy node-exporter.service file
+    copy:
+      src: ~/Thesis-on-the-Profession/monitoring/node-exporter.service
+      dest: /tmp/
+      owner: yc-user
+      group: yc-user
+
+  - name: Install node-exporter (start script install)
+    ansible.builtin.command: ./node-exporter-install-sudo
+    args:
+      chdir: /tmp/
+
+- name: prometheus-nginxlog-exporter
+  hosts: web
+  tasks:
+  
+  - name: Push prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+    ansible.builtin.shell: wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.9.2/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb -O /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+
+  - name: Install prometheus-nginxlog-exporter
+    become: true
+    ansible.builtin.apt:
+      deb: /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+      
+  - name: Start service prometheus-nginxlog-exporter
+    become: true
+    ansible.builtin.service:
+      name: prometheus-nginxlog-exporter
+      state: start
+
+...

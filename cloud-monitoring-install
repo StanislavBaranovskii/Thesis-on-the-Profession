@@ -14,7 +14,7 @@ MONS_VM2_NAME=vm-grafana
 
 ZONE=ru-central1-a
 
-echo [mons] > ~/Thesis-on-the-Profession/ansible/hosts
+echo [mons] >> ~/Thesis-on-the-Profession/ansible/hosts
 
 for VM_NAME in $MONS_VM1_NAME $MONS_VM2_NAME
 #for VM_NAME in $MONS_VM1_NAME

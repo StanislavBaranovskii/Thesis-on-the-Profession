@@ -1,9 +1,10 @@
 #!/bin/bash
+sudo useradd --no-create-home --shell /bin/false prometheus
 wget https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
 tar xvfz node_exporter-1.6.1.linux-amd64.tar.gz
 cd node_exporter-1.6.1.linux-amd64/
 #./node_exporter  #Проверяем доступность : http://127.0.0.1:9100/metrics
-sudo mkdir /etc/prometheus/node-exporter
+sudo mkdir -p /etc/prometheus/node-exporter
 sudo cp -f * /etc/prometheus/node-exporter/
 sudo chown -R prometheus:prometheus /etc/prometheus/node-exporter/
 #sudo nano /etc/systemd/system/node-exporter.service #Содержимое файла ниже в блоке кода
@@ -11,7 +12,7 @@ sudo cp -f /tmp/node-exporter.service /etc/systemd/system/node-exporter.service
 sudo systemctl enable node-exporter
 sudo systemctl start node-exporter
 #systemctl status node-exporter
-sudo cp -f /tmp/prometheus.yml /etc/prometheus/
-sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
-sudo systemctl restart prometheus.service
+#sudo cp -f /tmp/prometheus.yml /etc/prometheus/
+#sudo chown prometheus:prometheus /etc/prometheus/prometheus.yml
+#sudo systemctl restart prometheus.service
 
