@@ -15,3 +15,25 @@ sudo systemctl status grafana-server
 
 sudo systemctl daemon-reload
 
+/etc/grafana/grafana.ini
+-rw-r-----  1 root grafana 55352 Jul 25 09:54 grafana.ini
+
+Пути в grafana.ini до плагинов и дашбордов:
+provisioning/plugins ( /var/lib/grafana/plugins )
+provisioning/dashboards ( /var/lib/grafana/dashboards )
+
+
+ls -al /var/lib/grafana/
+drwxr-xr-x  5 grafana grafana   4096 Jul 25 14:39 .
+drwxr-xr-x 27 root    root      4096 Jul 25 13:58 ..
+drwxr-x---  3 grafana grafana   4096 Jul 25 13:59 alerting
+drwx------  2 grafana grafana   4096 Jul 25 13:59 csv
+-rw-r-----  1 grafana grafana 929792 Jul 25 14:39 grafana.db
+drwx------  2 grafana grafana   4096 Jul 25 13:59 png
+
+В файле хранится все? (пароли учеток и настройки подключения к pometheus , плюс настройки дашбордов)
+
+sudo grafana cli -h
+
+sudo grafana cli admin reset-admin-password 12345 # Установка пароля для пользователя admin
+

@@ -16,4 +16,9 @@ location / {
 <u>Name Nginx Server:</u> <b><font size="+2" color="#ff0000"><!--#echo var="HOSTNAME"--></font></b></p>
 <p><em><!--#echo var="DATE_LOCAL"--></em></p>
 
+Лог-файлы nginx /var/log/nginx/access.log /var/log/nginx/error.log:
+-rw-r----- 1 www-data adm 349 Jul 25 11:24 access.log
+-rw-r----- 1 www-data adm  76 Jul 25 11:24 error.log
+
+
 

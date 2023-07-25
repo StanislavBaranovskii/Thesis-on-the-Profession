@@ -5,6 +5,10 @@
 
 #yc compute instance list
 
+#
+# Запускать первым (до WEB и MONITORING)  - (LOGS/ELK -> WEB -> MONITORING)
+#
+
 LOGS_VM1_NAME=vm-elastic
 LOGS_VM2_NAME=vm-kibana
 

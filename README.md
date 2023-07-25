@@ -102,5 +102,14 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 
 ### Мониторинг
 
+Требование к ресурсам
+
+Выбор версий Prometheus и Grafana
+
+[Порядок установки grafana, edition:oss, version:9.5.6](https://grafana.com/grafana/download/9.5.6?edition=oss)
+
+[Настройка grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
+[Конфигурация grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources)
+
 
 ---

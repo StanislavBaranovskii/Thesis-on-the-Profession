@@ -1,6 +1,6 @@
 [web]
-vm-web1 ansible_host=158.160.43.134 ansible_connection=ssh ansible_ssh_user=yc-user
-vm-web2 ansible_host=158.160.31.198 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-web1 ansible_host=158.160.56.102 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-web2 ansible_host=51.250.27.11 ansible_connection=ssh ansible_ssh_user=yc-user
 [mons]
-vm-prometheus ansible_host=158.160.34.96 ansible_connection=ssh ansible_ssh_user=yc-user
-vm-grafana ansible_host=158.160.112.85 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-prometheus ansible_host=158.160.105.51 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-grafana ansible_host=158.160.97.72 ansible_connection=ssh ansible_ssh_user=yc-user

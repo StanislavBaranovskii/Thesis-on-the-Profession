@@ -5,6 +5,10 @@
 
 #yc compute instance list
 
+#
+# Запускать после разворачивания LOGS (elk) и перед MONITORING  - (LOGS/ELK -> WEB -> MONITORING)
+#
+
 WEB_VM1_NAME=vm-web1
 WEB_VM2_NAME=vm-web2
 

@@ -6,7 +6,7 @@
 #yc compute instance list
 
 #
-# Запускать после разворачивания WEB
+# Запускать после разворачивания WEB (LOGS/ELK -> WEB -> MONITORING)
 #
 
 MONS_VM1_NAME=vm-prometheus

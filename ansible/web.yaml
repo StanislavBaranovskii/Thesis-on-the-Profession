@@ -125,20 +125,33 @@
   hosts: web
   tasks:
   
-#  - name: Push prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
-#    ansible.builtin.shell: wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.9.2/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb -O /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
-    
   - name: Push prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
-    ansible.builtin.copy:
-      src: ~/packages/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
-      #src: https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.9.2/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb 
-      dest: /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
-      remote_src: false
-      mode: preserve
+    ansible.builtin.shell: wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.9.2/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb -O /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+    
+#  - name: Push prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+#    ansible.builtin.copy:
+#      src: ~/packages/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+#      #src: https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.9.2/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb 
+#      dest: /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+#      remote_src: false
+#      mode: preserve
 
   - name: Install prometheus-nginxlog-exporter
     ansible.builtin.apt:
       deb: /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+
+#Права на чтения лог файлов nginx для prometheus-nginxlog-exporter
+  - name: Set flag o+r for access.log
+    become: true
+    ansible.builtin.file:
+      path: /var/log/nginx/access.log
+      mode: o+r
+
+  - name: Set flag o+r for error.log
+    become: true
+    ansible.builtin.file:
+      path: /var/log/nginx/error.log
+      mode: o+r
       
   - name: Start service prometheus-nginxlog-exporter
     ansible.builtin.service:
