@@ -12,3 +12,6 @@ sudo systemctl status grafana-server
 
 Доступ к web интерфейсу grafana (admin/admin):
 <Внешний_IP>:3000
+
+sudo systemctl daemon-reload
+

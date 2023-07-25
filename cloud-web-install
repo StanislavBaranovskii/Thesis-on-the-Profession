@@ -62,7 +62,8 @@ scrape_configs:
   - job_name: \"web2\"
     scrape_interval: 5s
     static_configs:
-      - targets: ['$IP_WEB2:9100', '$IP_WEB2:4040']" > ~/Thesis-on-the-Profession/monitoring/prometheus.yml
+      - targets: ['$IP_WEB2:9100', '$IP_WEB2:4040']
+" > ~/Thesis-on-the-Profession/monitoring/prometheus.yml
 
     
 
