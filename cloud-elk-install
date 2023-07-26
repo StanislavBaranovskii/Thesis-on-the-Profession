@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 
-#ssh-keygen -t ed25519
+#if not exist ~/.ssh/id_ed25519.pub  ssh-keygen -t ed25519
 
 #yc compute instance list
 
@@ -21,8 +21,8 @@ do
     yc compute instance get $VM_NAME &>/dev/null
     if [ $? -ne 0 ]; then
         echo "ВМ $VM_NAME не найдена. Создаём"
-        #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub >/dev/null
-        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 4GB  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=20,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub >/dev/null
+        #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
+        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 4GB  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=20,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
         if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; fi 
     else
         echo "ВМ $VM_NAME уже существует"
@@ -32,7 +32,7 @@ do
     echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
 done
 
-sleep 30s
+sleep 60s
 
 IP_ELASTIC=$(yc compute instance get $LOGS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 IP_KIBANA=$(yc compute instance get $LOGS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)

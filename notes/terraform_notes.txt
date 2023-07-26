@@ -1,0 +1,8 @@
+#terraform init
+terraform validate
+terraform fmt
+terraform plan
+terraform applay
+
+terraform destroy
+
