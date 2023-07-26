@@ -76,15 +76,15 @@ ansible-playbook web.yaml
 
 #sleep 1s
 
-#tar czf - ~/Thesis-on-the-Profession/WWW/index.nginx-debian.html | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /var/www/html/index.nginx-debian.html
-#scp ~/Thesis-on-the-Profession/WWW/index.nginx-debian.html yc-user@$IP_WEB_VM1:/tmp/
+#tar czf - ~/Thesis-on-the-Profession/web/index.nginx-debian.html | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /var/web/html/index.nginx-debian.html
+#scp ~/Thesis-on-the-Profession/web/index.nginx-debian.html yc-user@$IP_WEB_VM1:/tmp/
 
-#tar czf - ~/Thesis-on-the-Profession/WWW/default | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /etc/nginx/sites-enabled/default
-#scp ~/Thesis-on-the-Profession/WWW/default yc-user@$IP_WEB_VM1:/tmp/
+#tar czf - ~/Thesis-on-the-Profession/web/default | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /etc/nginx/sites-enabled/default
+#scp ~/Thesis-on-the-Profession/web/default yc-user@$IP_WEB_VM1:/tmp/
 
 #sleep 1s
 
-#ansible -b web -m shell -a 'mv -f /tmp/index.nginx-debian.html /var/www/html/'
+#ansible -b web -m shell -a 'mv -f /tmp/index.nginx-debian.html /var/web/html/'
 #ansible -b web -m shell -a 'mv -f /tmp/default /etc/nginx/sites-enabled/'
 #ansible -b web -m shell -a 'systemctl restart nginx'
 
