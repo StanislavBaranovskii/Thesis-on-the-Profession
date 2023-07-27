@@ -37,9 +37,34 @@ drwx------  2 grafana grafana   4096 Jul 25 13:59 csv
 drwx------  2 grafana grafana   4096 Jul 25 13:59 png
 
 /var/lib/grafana/grafana.db
-В файле хранится все? (пароли учеток и настройки подключения к pometheus , плюс настройки дашбордов)
+В файле хранятся: пароли учеток (таблица user); настройки подключения к pometheus (таблица data_source) и дашборды (таблица dashboard)
 
 sudo grafana cli -h
 
-sudo grafana cli admin reset-admin-password 12345 # Установка пароля для пользователя admin. Внимание! Перед сбросом пароль необходимо хотябы один раз зайти в GUI. И после сброса пароля служба grafana-server не перезапускается
+sudo grafana cli admin reset-admin-password 12345 # Установка пароля для пользователя admin. Внимание! Перед сбросом пароля необходимо хотя бы один раз зайти в GUI. И после сброса пароля служба grafana-server не стартует
+
+INFO [07-27|13:33:54] Starting Grafana                         logger=settings version= commit= branch= compiled=1970-01-01T00:00:00Z
+WARN [07-27|13:33:54] "sentry" frontend logging provider is deprecated and will be removed in the next major version. Use "grafana" provider instead. logger=settings
+INFO [07-27|13:33:54] Config loaded from                       logger=settings file=/usr/share/grafana/conf/defaults.ini
+INFO [07-27|13:33:54] Config loaded from                       logger=settings file=/etc/grafana/grafana.ini
+INFO [07-27|13:33:54] Config overridden from command line      logger=settings arg="default.paths.data=/var/lib/grafana"
+INFO [07-27|13:33:54] Config overridden from command line      logger=settings arg="default.paths.logs=/var/log/grafana"
+INFO [07-27|13:33:54] Config overridden from command line      logger=settings arg="default.paths.plugins=/var/lib/grafana/plugins"
+INFO [07-27|13:33:54] Config overridden from command line      logger=settings arg="default.paths.provisioning=/etc/grafana/provisioning"
+INFO [07-27|13:33:54] Target                                   logger=settings target=[all]
+INFO [07-27|13:33:54] Path Home                                logger=settings path=/usr/share/grafana
+INFO [07-27|13:33:54] Path Data                                logger=settings path=/var/lib/grafana
+INFO [07-27|13:33:54] Path Logs                                logger=settings path=/var/log/grafana
+INFO [07-27|13:33:54] Path Plugins                             logger=settings path=/var/lib/grafana/plugins
+INFO [07-27|13:33:54] Path Provisioning                        logger=settings path=/etc/grafana/provisioning
+INFO [07-27|13:33:54] App mode production                      logger=settings
+INFO [07-27|13:33:54] Connecting to DB                         logger=sqlstore dbtype=sqlite3
+INFO [07-27|13:33:54] Starting DB migrations                   logger=migrator
+INFO [07-27|13:33:54] migrations completed                     logger=migrator performed=0 skipped=484 duration=863.422µs
+INFO [07-27|13:33:54] Envelope encryption state                logger=secrets enabled=true current provider=secretKey.v1
+
+Admin password changed successfully ✔
+
+
+sudo apt-get install sqlitebrowser #для просмотра grafana.db
 

@@ -2,6 +2,13 @@
 - name: nginx
   hosts: web
   tasks:
+
+  - name: Wait for target connection to become reachable/usable
+    ansible.builtin.wait_for_connection:
+      delay: 0
+      sleep: 1
+      timeout: 300
+
   - name: Install nginx
     package:
       name: nginx

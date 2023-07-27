@@ -37,7 +37,7 @@ do
 done
 
 
-sleep 30s
+sleep 1s
 
 
 cd ~/Thesis-on-the-Profession/ansible

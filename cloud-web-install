@@ -16,7 +16,7 @@ WEB_VM2_NAME=vm-web2
 ZONE=ru-central1-a
 
 MEMORY_SIZE=2GB
-DISK_SIZE=8 #GB
+DISK_SIZE=6 #GB
 
 echo [web] > ~/Thesis-on-the-Profession/ansible/hosts
 
@@ -39,7 +39,10 @@ done
 
 
 
-sleep 30s
+sleep 35s
+
+cd ~/Thesis-on-the-Profession/ansible
+ansible-playbook web.yaml
 
 IP_WEB1=$(yc compute instance get $WEB_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 IP_WEB2=$(yc compute instance get $WEB_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
@@ -75,8 +78,7 @@ scrape_configs:
 
     
 
-cd ~/Thesis-on-the-Profession/ansible
-ansible-playbook web.yaml
+
 
 
 #tar czf - ~/Thesis-on-the-Profession/web/index.nginx-debian.html | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /var/web/html/index.nginx-debian.html
