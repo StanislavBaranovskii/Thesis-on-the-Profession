@@ -18,9 +18,14 @@ sudo systemctl daemon-reload
 /etc/grafana/grafana.ini
 -rw-r-----  1 root grafana 55352 Jul 25 09:54 grafana.ini
 
+/usr/share/grafana/conf/defaults.ini
+-rw-r--r-- 1 root root 57939 Jul 10 18:40 /usr/share/grafana/conf/defaults.ini
+
 Пути в grafana.ini до плагинов и дашбордов:
 provisioning/plugins ( /var/lib/grafana/plugins )
+default.paths.plugins=/var/lib/grafana/plugins
 provisioning/dashboards ( /var/lib/grafana/dashboards )
+default.paths.provisioning=/etc/grafana/provisioning
 
 
 ls -al /var/lib/grafana/
@@ -31,9 +36,10 @@ drwx------  2 grafana grafana   4096 Jul 25 13:59 csv
 -rw-r-----  1 grafana grafana 929792 Jul 25 14:39 grafana.db
 drwx------  2 grafana grafana   4096 Jul 25 13:59 png
 
+/var/lib/grafana/grafana.db
 В файле хранится все? (пароли учеток и настройки подключения к pometheus , плюс настройки дашбордов)
 
 sudo grafana cli -h
 
-sudo grafana cli admin reset-admin-password 12345 # Установка пароля для пользователя admin
+sudo grafana cli admin reset-admin-password 12345 # Установка пароля для пользователя admin. Внимание! Перед сбросом пароль необходимо хотябы один раз зайти в GUI. И после сброса пароля служба grafana-server не перезапускается
 

@@ -114,7 +114,7 @@
       name: grafana-server
       state: started
 
-  - name: Install password for user admin (grafana) 
-    ansible.builtin.shell: grafana cli admin reset-admin-password Grafana123
+#  - name: Install password for user admin (grafana cli) 
+#    ansible.builtin.shell: grafana cli admin reset-admin-password Grafana123
 
 ...

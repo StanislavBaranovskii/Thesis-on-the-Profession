@@ -14,6 +14,9 @@ MONS_VM2_NAME=vm-grafana
 
 ZONE=ru-central1-a
 
+MEMORY_SIZE=4GB
+DISK_SIZE=10 #GB
+
 echo [mons] >> ~/Thesis-on-the-Profession/ansible/hosts
 
 for VM_NAME in $MONS_VM1_NAME $MONS_VM2_NAME
@@ -23,7 +26,7 @@ do
     if [ $? -ne 0 ]; then
         echo "ВМ $VM_NAME не найдена. Создаём"
         #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
-        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 4GB  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=20,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
+        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub >/dev/null
         if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; fi 
     else
         echo "ВМ $VM_NAME уже существует"
@@ -34,16 +37,14 @@ do
 done
 
 
-sleep 60s
-
-IP_PROMET=$(yc compute instance get $MONS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
-IP_GRAFAN=$(yc compute instance get $MONS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+sleep 30s
 
 
-sleep 1s
 cd ~/Thesis-on-the-Profession/ansible
 ansible-playbook monitoring.yaml
 
+#IP_PROMET=$(yc compute instance get $MONS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+#IP_GRAFAN=$(yc compute instance get $MONS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 
 #scp ~/Thesis-on-the-Profession/monitoring/prometheus.service yc-user@$IP_PROMET:/tmp/
 #scp ~/Thesis-on-the-Profession/monitoring/prometheus-install-sudo yc-user@$IP_PROMET:/tmp/
@@ -55,6 +56,6 @@ ansible-playbook monitoring.yaml
 
 #scp ~/Thesis-on-the-Profession/monitoring/prometheus.yml yc-user@$IP_PROMET:/tmp/
 
-#/tmp/prometheus-install-sudo #Без привилегей!
-#/tmp/node-exporter-install #Без привилегей!
+#/tmp/prometheus-install-sudo #Запускать без привилегей!
+#/tmp/node-exporter-install #Запускать с привилегиями!
 
