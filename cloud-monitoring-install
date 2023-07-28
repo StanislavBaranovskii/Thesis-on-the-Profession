@@ -39,12 +39,13 @@ done
 
 sleep 1s
 
+IP_PROMET=$(yc compute instance get $MONS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+IP_GRAFAN=$(yc compute instance get $MONS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 
 cd ~/Thesis-on-the-Profession/ansible
-ansible-playbook monitoring.yaml
+ansible-playbook monitoring.yaml --extra-vars="ip_prom=$IP_PROMET"
 
-#IP_PROMET=$(yc compute instance get $MONS_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
-#IP_GRAFAN=$(yc compute instance get $MONS_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+
 
 #scp ~/Thesis-on-the-Profession/monitoring/prometheus.service yc-user@$IP_PROMET:/tmp/
 #scp ~/Thesis-on-the-Profession/monitoring/prometheus-install-sudo yc-user@$IP_PROMET:/tmp/

@@ -92,6 +92,16 @@
 #    debug:
 #     var: result
 
+- name: Edit file grafana.md
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Edit IP address prometheus server
+    ansible.builtin.command: sqlite3 grafana.db "update data_source set url='http://{{ ip_prom }}:9090' where name='Prometheus'"
+    args:
+      chdir: ~/Thesis-on-the-Profession/monitoring/grafana
+
 - name: Grafana
   hosts: vm-grafana
   become: true

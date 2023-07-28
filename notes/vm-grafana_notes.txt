@@ -68,3 +68,22 @@ Admin password changed successfully ✔
 
 sudo apt-get install sqlitebrowser #для просмотра grafana.db
 
+
+sqlite3
+
+cd ~/Thesis-on-the-Profession/monitoring/grafana
+sqlite3
+.open grafana.db
+.databases
+.dbinfo
+
+.mode column
+select * from data_source;
+select url from data_source where name="Prometheus";
+update data_source set url="http://127.0.0.1:9090" where name="Prometheus";
+.quit
+
+sqlite3 grafana.db "select url from data_source where name='Prometheus'"
+sqlite3 grafana.db "update data_source set url='http://1.2.3.4:9090' where name='Prometheus'"
+sqlite3 grafana.db "select url from data_source where name='Prometheus'"
+
