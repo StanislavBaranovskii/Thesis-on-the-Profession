@@ -2,14 +2,25 @@
 - name: Prometheus and Node-exporter Prometheus-nginxlog-exporter
   hosts: vm-prometheus
 #  become: true
+  gather_facts: false
   
-  tasks:
+  pre_tasks:
+  
+  - name: Wait for port 22 to become open on the hosts
+    ansible.builtin.wait_for:
+      port: 22
+      delay: 10
 
   - name: Wait for target connection to become reachable/usable
     ansible.builtin.wait_for_connection:
       delay: 0
-      sleep: 1
+      sleep: 2
       timeout: 300
+
+  - name: Gather facts
+    ansible.builtin.setup:
+  
+  tasks:
   
   - name: Copy script install prometheus
     ansible.builtin.copy:
@@ -95,9 +106,9 @@
 - name: Edit file grafana.md
   hosts: 127.0.0.1
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
-  - name: Edit IP address prometheus server
+  - name: Edit prometheus server IP address in grafana.db
     ansible.builtin.command: sqlite3 grafana.db "update data_source set url='http://{{ ip_prom }}:9090' where name='Prometheus'"
     args:
       chdir: ~/Thesis-on-the-Profession/monitoring/grafana
@@ -105,6 +116,23 @@
 - name: Grafana
   hosts: vm-grafana
   become: true
+  gather_facts: false
+  
+  pre_tasks:
+  
+  - name: Wait for port 22 to become open on the hosts
+    ansible.builtin.wait_for:
+      port: 22
+      delay: 10
+
+  - name: Wait for target connection to become reachable/usable
+    ansible.builtin.wait_for_connection:
+      delay: 0
+      sleep: 2
+      timeout: 300
+
+  - name: Gather facts
+    ansible.builtin.setup:
 
   tasks:
   - name: Wait for target connection to become reachable/usable

@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 
+
 #if not exist ~/.ssh/id_ed25519.pub   ssh-keygen -t ed25519
 
 #yc compute instance list
@@ -25,37 +26,28 @@ do
     if [ $? -ne 0 ]; then
         echo "ВМ $VM_NAME не найдена. Создаём"
         #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
-        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
+        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub >/dev/null
         if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; fi 
     else
         echo "ВМ $VM_NAME уже существует"
     fi
+
+    VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+    echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
     ZONE=ru-central1-b
 done
 
-#Ожидаем публикации IP создаваемых ВМ
-for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
-do
-    VM_IP=""
-    until [ -n "$VM_IP" ]
-    do
-        VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
-        if [ -n "$VM_IP" ]; then
-            echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
-            if [ "$VM_NAME" = "$WEB_VM1_NAME" ]; then IP_WEB1=$VM_IP; fi
-            if [ "$VM_NAME" = "$WEB_VM2_NAME" ]; then IP_WEB2=$VM_IP; fi
-        fi
-        sleep 2
-    done
-done
 
-yc compute instance list
+
+sleep 35s
 
 cd ~/Thesis-on-the-Profession/ansible
 ansible-playbook web.yaml
 
+IP_WEB1=$(yc compute instance get $WEB_VM1_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+IP_WEB2=$(yc compute instance get $WEB_VM2_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
 
-#Перезаписываем конфигурационный файл prometheus.yml
+
 echo "global:
   scrape_interval: 15s
   evaluation_interval: 15s
