@@ -24,4 +24,10 @@ location / {
 -rw-r----- 1 www-data adm  76 Jul 25 11:24 error.log
 
 
+ls -al /etc/nginx/nginx.conf
+-rw-r--r-- 1 root root 1662 Aug  1 12:52 /etc/nginx/nginx.conf
+
+ls -al /etc/prometheus-nginxlog-exporter.hcl
+-rw-r--r-- 1 root root 368 Aug  1 13:01 /etc/prometheus-nginxlog-exporter.hcl
+
 

@@ -14,8 +14,8 @@ WEB_VM2_NAME=vm-web2
 
 ZONE=ru-central1-a
 
-MEMORY_SIZE=2GB
-DISK_SIZE=6 #GB
+MEMORY_SIZE=1GB
+DISK_SIZE=3 #GB
 
 echo [web] > ~/Thesis-on-the-Profession/ansible/hosts
 
@@ -26,7 +26,7 @@ do
         echo "ВМ $VM_NAME не найдена. Создаём"
         #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
         yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
-        if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; fi 
+        if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; exit 1; fi 
     else
         echo "ВМ $VM_NAME уже существует"
     fi
@@ -34,6 +34,7 @@ do
 done
 
 #Ожидаем публикации IP создаваемых ВМ
+echo "Ожидаем публикации IP создаваемых ВМ.."
 for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
 do
     VM_IP=""
@@ -51,9 +52,6 @@ done
 
 yc compute instance list
 
-cd ~/Thesis-on-the-Profession/ansible
-ansible-playbook web.yaml
-
 
 #Перезаписываем конфигурационный файл prometheus.yml
 echo "global:
@@ -68,24 +66,21 @@ alerting:
 rule_files:
 
 scrape_configs:
-  - job_name: \"prometheus\"
-    scrape_interval: 5s
-    static_configs:
-      - targets: ['localhost:9090', 'localhost:9100']
 
   - job_name: \"web1\"
-    scrape_interval: 5s
+    scrape_interval: 8s
     static_configs:
       - targets: ['$IP_WEB1:9100', '$IP_WEB1:4040']
 
   - job_name: \"web2\"
-    scrape_interval: 5s
+    scrape_interval: 8s
     static_configs:
       - targets: ['$IP_WEB2:9100', '$IP_WEB2:4040']
-" > ~/Thesis-on-the-Profession/monitoring/prometheus.yml
+" > ~/Thesis-on-the-Profession/monitoring/prometheus/prometheus.yml
 
     
-
+cd ~/Thesis-on-the-Profession/ansible
+ansible-playbook web.yaml
 
 
 

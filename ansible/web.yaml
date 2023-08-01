@@ -5,16 +5,17 @@
   
   pre_tasks:
   
+  - name: Wait for target connection to become reachable/usable
+    ansible.builtin.wait_for_connection:
+      delay: 20
+      sleep: 2
+      timeout: 300
+
   - name: Wait for port 22 to become open on the hosts
     ansible.builtin.wait_for:
       port: 22
-      delay: 10
-
-  - name: Wait for target connection to become reachable/usable
-    ansible.builtin.wait_for_connection:
-      delay: 0
-      sleep: 2
-      timeout: 300
+      delay: 5
+      connect_timeout: 20
 
   - name: Gather facts
     ansible.builtin.setup:
@@ -27,7 +28,7 @@
 #      echo: no
 
   - name: Install nginx
-    package:
+    ansible.builtin.package:
       name: nginx
       state: present
     notify:
@@ -35,14 +36,14 @@
     become: true
 
   - name: Copy files
-    copy: src={{ item.0 }} dest={{ item.1 }}
+    ansible.builtin.copy: src={{ item.0 }} dest={{ item.1 }}
     with_together:
-      - [ '~/Thesis-on-the-Profession/web/default', '~/Thesis-on-the-Profession/web/index.nginx-debian.html' ]
-      - [ '/etc/nginx/sites-enabled/', '/var/www/html/' ]
+      - [ '~/Thesis-on-the-Profession/web/nginx/default', '~/Thesis-on-the-Profession/web/nginx/nginx.conf', '~/Thesis-on-the-Profession/web/WWW/index.nginx-debian.html' ]
+      - [ '/etc/nginx/sites-enabled/', '/etc/nginx/', '/var/www/html/' ]
     become: true
 
   - name: "Restart service nginx"
-    service:
+    ansible.builtin.service:
       name: nginx
       state: restarted
     retries: 2
@@ -67,7 +68,7 @@
 #      mode: preserve
 
   - name: Push filebeat-7.17.11-amd64.deb (https://getfile.dokpub.com/yandex/)
-    ansible.builtin.shell: wget "https://downloader.disk.yandex.ru/disk/b8856da257dd5400a555947d75d7616f87dd5d8c0f10546735a705ed023b848f/64c649eb/ZlD-p3FW65j3wh3XWywyYVj77tm-28Yix84Y5tZLDRLNWWMN18FUSwy2KWtxwWmPU5OtbCMHVynMWF80aLAung%3D%3D?uid=0&filename=filebeat-7.17.11-amd64.deb&disposition=attachment&hash=Lk9G2eNgD%2BaqPnlUMdW72FqHsFjh5R2joskvMuMpH1h2%2Bzh5Pw1GecK1KKGBZkKQq/J6bpmRyOJonT3VoXnDag%3D%3D%3A&limit=0&content_type=application%2Fvnd.debian.binary-package&owner_uid=1712584571&fsize=35833358&hid=85e0c054db9792e0c99fa807151109c5&media_type=compressed&tknv=v2" -O /tmp/filebeat-7.17.11-amd64.deb
+    ansible.builtin.shell: wget "https://downloader.disk.yandex.ru/disk/0459a42c125b6e337324bb6b9d3d77cf912f1bf10dc46618b9b806e60c69c4f3/64c95004/ZlD-p3FW65j3wh3XWywyYVj77tm-28Yix84Y5tZLDRLNWWMN18FUSwy2KWtxwWmPU5OtbCMHVynMWF80aLAung%3D%3D?uid=0&filename=filebeat-7.17.11-amd64.deb&disposition=attachment&hash=Lk9G2eNgD%2BaqPnlUMdW72FqHsFjh5R2joskvMuMpH1h2%2Bzh5Pw1GecK1KKGBZkKQq/J6bpmRyOJonT3VoXnDag%3D%3D%3A&limit=0&content_type=application%2Fvnd.debian.binary-package&owner_uid=1712584571&fsize=35833358&hid=85e0c054db9792e0c99fa807151109c5&media_type=compressed&tknv=v2" -O /tmp/filebeat-7.17.11-amd64.deb
 
   - name: Install filebeat
     ansible.builtin.apt:
@@ -119,7 +120,7 @@
   tasks:
 
   - name: Copy script install node-exporter-install-sudo
-    copy:
+    ansible.builtin.copy:
       src: ~/Thesis-on-the-Profession/monitoring/node-exporter-install-sudo
       dest: /tmp/
       owner: yc-user
@@ -133,7 +134,7 @@
 #      dest: /etc/systemd/system/
 
   - name: Copy node-exporter.service file
-    copy:
+    ansible.builtin.copy:
       src: ~/Thesis-on-the-Profession/monitoring/node-exporter.service
       dest: /tmp/
       owner: yc-user
@@ -163,6 +164,12 @@
   - name: Install prometheus-nginxlog-exporter
     ansible.builtin.apt:
       deb: /tmp/prometheus-nginxlog-exporter_1.9.2_linux_amd64.deb
+
+  - name: Copy prometheus-nginxlog-exporter.hcl file
+    become: true
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/monitoring/prometheus-nginxlog-exporter.hcl
+      dest: /etc/
 
 #Права на чтения лог файлов nginx для prometheus-nginxlog-exporter
   - name: Set flag o+r for access.log

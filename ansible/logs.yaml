@@ -6,16 +6,17 @@
   
   pre_tasks:
   
+  - name: Wait for target connection to become reachable/usable
+    ansible.builtin.wait_for_connection:
+      delay: 20
+      sleep: 2
+      timeout: 300
+
   - name: Wait for port 22 to become open on the hosts
     ansible.builtin.wait_for:
       port: 22
-      delay: 10
-
-  - name: Wait for target connection to become reachable/usable
-    ansible.builtin.wait_for_connection:
-      delay: 0
-      sleep: 2
-      timeout: 300
+      delay: 5
+      connect_timeout: 20
 
   - name: Gather facts
     ansible.builtin.setup:
@@ -41,6 +42,7 @@
 #  - name: Push elasticsearch-7.17.11-amd64.deb
 #    ansible.builtin.copy:
 #      src: ~/packages/elasticsearch-7.17.11-amd64.deb
+       #src: https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.17.11-amd64.deb
 #      dest: /tmp/elasticsearch-7.17.11-amd64.deb
 #      remote_src: false
 #      mode: preserve
@@ -51,7 +53,7 @@
   - name: Install elasticsearch
     ansible.builtin.apt:
       deb: /tmp/elasticsearch-7.17.11-amd64.deb
-      #deb: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
+      #deb: https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.17.11-amd64.deb
 
   - name: Copy elasticsearch.yml
     ansible.builtin.copy:
@@ -94,7 +96,7 @@
 #  - name: Push kibana-7.17.11-amd64.deb
 #    ansible.builtin.copy:
 #      src: ~/packages/kibana-7.17.11-amd64.deb
-#      #src: https://artifacts.elastic.co/downloads/beats/kibana/kibana-7.17.11-amd64.deb
+#      #src: https://artifacts.elastic.co/downloads/kibana/kibana-7.17.11-amd64.deb
 #      dest: /tmp/kibana-7.17.11-amd64.deb
 #      remote_src: false
 #      mode: preserve
@@ -105,7 +107,7 @@
   - name: Install kibana
     ansible.builtin.apt:
       deb: /tmp/kibana-7.17.11-amd64.deb
-      #dep: https://artifacts.elastic.co/downloads/beats/kibana/kibana-7.17.11-amd64.deb
+      #dep: https://artifacts.elastic.co/downloads/kibana/kibana-7.17.11-amd64.deb
 
   - name: Copy kibana.yml
     ansible.builtin.copy:

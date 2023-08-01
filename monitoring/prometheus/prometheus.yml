@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+
+rule_files:
+
+scrape_configs:
+
+  - job_name: "web1"
+    scrape_interval: 8s
+    static_configs:
+      - targets: ['158.160.34.185:9100', '158.160.34.185:4040']
+
+  - job_name: "web2"
+    scrape_interval: 8s
+    static_configs:
+      - targets: ['130.193.55.180:9100', '130.193.55.180:4040']
+  - job_name: "prometheus"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['158.160.60.181:9090', '158.160.60.181:9100']
+

@@ -26,13 +26,14 @@ do
         echo "ВМ $VM_NAME не найдена. Создаём"
         #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
         yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
-        if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; fi 
+        if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; exit 1; fi 
     else
         echo "ВМ $VM_NAME уже существует"
     fi
 done
 
 #Ожидаем публикации IP создаваемых ВМ
+echo "Ожидаем публикации IP создаваемых ВМ.."
 for VM_NAME in $LOGS_VM1_NAME $LOGS_VM2_NAME
 do
     VM_IP=""

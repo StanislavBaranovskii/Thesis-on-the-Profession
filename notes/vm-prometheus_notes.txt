@@ -53,12 +53,14 @@ sudo journalctl -xe
 Доступность prometheus-nginxlog-exporter:
 <Внешний_IP>:4040
 404 page not found
+curl http://<Внешний_IP>:4040/metrics
 
 ######################################################
 
 sudo systemctl daemon-reload
 
 ./prometheus-nginxlog-exporter -config-file /path/to/config.hcl -verify-config
+/usr/sbin/prometheus-nginxlog-exporter -config-file /etc/prometheus-nginxlog-exporter.hcl
 
 Доступ к лог-файлам nginx /var/log/nginx/access.log /var/log/nginx/error.log:
 -rw-r----- 1 www-data adm 349 Jul 25 11:24 access.log
@@ -68,5 +70,7 @@ sudo usermod -aG adm yc-user #Для yc-user сработал после пер�
 sudo usermod -aG adm root #Процесс prometheus-nginxlog-exporter запукается от имени root но как перелогинеться? Или создать нового пользователя и запустить службу от его имени? 
 или chmod o+r /var/log/nginx/*.log
 
+
+for each in {1..10}; do curl http://<Внешний_IP ; done
 
 

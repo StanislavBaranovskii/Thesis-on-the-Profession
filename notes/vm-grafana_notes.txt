@@ -87,3 +87,10 @@ sqlite3 grafana.db "select url from data_source where name='Prometheus'"
 sqlite3 grafana.db "update data_source set url='http://1.2.3.4:9090' where name='Prometheus'"
 sqlite3 grafana.db "select url from data_source where name='Prometheus'"
 
+
+Утилизация ЦПУ:
+avg by (instance) (irate(process_cpu_seconds_total{job="$job"}[1m])) 
+sum by (mode, instance) (rate(node_cpu_seconds_total{job="$job",mode="idle"}[1m]))
+100 - (avg by (instance) (rate(node_cpu_seconds_total{job="$job",mode="idle"}[1m])) * 100)
+
+
