@@ -35,40 +35,91 @@
     - Start nginx
     become: true
 
+#  - name: Copy files
+#    ansible.builtin.copy: src={{ item.0 }} dest={{ item.1 }}
+#    with_together:
+#      - [ '~/Thesis-on-the-Profession/web/nginx/default', '~/Thesis-on-the-Profession/web/nginx/nginx.conf', '~/Thesis-on-the-Profession/web/WWW/index.nginx-debian.html' ]
+#      - [ '/etc/nginx/sites-enabled/', '/etc/nginx/', '/var/www/html/' ]
+#    become: true
+
   - name: Copy files
     ansible.builtin.copy: src={{ item.0 }} dest={{ item.1 }}
     with_together:
-      - [ '~/Thesis-on-the-Profession/web/nginx/default', '~/Thesis-on-the-Profession/web/nginx/nginx.conf', '~/Thesis-on-the-Profession/web/WWW/index.nginx-debian.html' ]
-      - [ '/etc/nginx/sites-enabled/', '/etc/nginx/', '/var/www/html/' ]
+      - [ '~/Thesis-on-the-Profession/web/nginx/default', '~/Thesis-on-the-Profession/web/nginx/nginx.conf' ]
+      - [ '/etc/nginx/sites-enabled/', '/etc/nginx/' ]
     become: true
+  
+  handlers:
+  - name: Start nginx 
+    service: name=nginx state=started
 
+################################
+
+- name: Copy html file web1
+  hosts: vm-web1
+  become: true
+  gather_facts: false
+  
+  tasks:
+  - name: "Copy index.nginx-debian.html web1"
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web1.html
+      dest: /var/www/html/index.nginx-debian.html
+
+###############################
+
+- name: Copy html file web2
+  hosts: vm-web2
+  become: true
+  gather_facts: false
+  
+  tasks:
+  - name: Copy index.nginx-debian.html web2
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web2.html
+      dest: /var/www/html/index.nginx-debian.html
+
+###############################
+
+- name: nginx restart
+  hosts: web
+  become: true
+  gather_facts: false
+  
+  tasks:
   - name: "Restart service nginx"
     ansible.builtin.service:
       name: nginx
       state: restarted
     retries: 2
     delay: 2
-    become: true
-  
-  handlers:
-  - name: Start nginx 
-    service: name=nginx state=started
-    
+
+###############################
+ 
 - name: filebeat
   hosts: web
   become: true
   
   tasks:
-#  - name: Push filebeat-7.17.11-amd64.deb
+#  - name: Push filebeat-7.17.11-amd64.deb (copy - SHA256)
 #    ansible.builtin.copy:
 #      src: ~/packages/filebeat-7.17.11-amd64.deb
 #      #src: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
 #      dest: /tmp/filebeat-7.17.11-amd64.deb
+#      checksum: sha256:b3dd37d178b30f07bd0b1585d2d5ed7d7b0f3a8fc0247cc1706e1e69a970608b
 #      remote_src: false
-#      mode: preserve
+#      #mode: preserve
 
-  - name: Push filebeat-7.17.11-amd64.deb (https://getfile.dokpub.com/yandex/)
-    ansible.builtin.shell: wget "https://downloader.disk.yandex.ru/disk/0459a42c125b6e337324bb6b9d3d77cf912f1bf10dc46618b9b806e60c69c4f3/64c95004/ZlD-p3FW65j3wh3XWywyYVj77tm-28Yix84Y5tZLDRLNWWMN18FUSwy2KWtxwWmPU5OtbCMHVynMWF80aLAung%3D%3D?uid=0&filename=filebeat-7.17.11-amd64.deb&disposition=attachment&hash=Lk9G2eNgD%2BaqPnlUMdW72FqHsFjh5R2joskvMuMpH1h2%2Bzh5Pw1GecK1KKGBZkKQq/J6bpmRyOJonT3VoXnDag%3D%3D%3A&limit=0&content_type=application%2Fvnd.debian.binary-package&owner_uid=1712584571&fsize=35833358&hid=85e0c054db9792e0c99fa807151109c5&media_type=compressed&tknv=v2" -O /tmp/filebeat-7.17.11-amd64.deb
+  - name: Push filebeat-7.17.11-amd64.deb (get_url - SHA256)
+    ansible.builtin.get_url:
+      #url: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
+      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/9b2hYmXUAv63zg
+      dest: /tmp/filebeat-7.17.11-amd64.deb
+      checksum: sha256:b3dd37d178b30f07bd0b1585d2d5ed7d7b0f3a8fc0247cc1706e1e69a970608b
+      #mode: '0740'
+
+#  - name: Push filebeat-7.17.11-amd64.deb (https://getfile.dokpub.com/yandex/)
+#    ansible.builtin.shell: wget "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/9b2hYmXUAv63zg" -O /tmp/filebeat-7.17.11-amd64.deb
 
   - name: Install filebeat
     ansible.builtin.apt:

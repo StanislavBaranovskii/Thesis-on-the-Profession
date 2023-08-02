@@ -52,6 +52,33 @@ done
 
 yc compute instance list
 
+#Редактируем html файл index.nginx-debian.html
+echo "$(cat ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian.html |awk '/http:\/\/localhost:80\//{exit 0}{print $0}')" > ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web1.html
+cp -f ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web1.html ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web2.html
+
+echo "<p><b><center><a href=\"http://$IP_WEB2:80/\">Switch to another WEB server</a></center></b></p>
+<p><em>#############################################################</em></p>
+
+<p><u>IP Address Nginx Server:</u> <b><font size=\"+2\" color=\"#ff0000\"><!--#echo var=\"SERVER_ADDR\"--></font></b></br>
+<u>Name Nginx Server:</u> <b><font size=\"+2\" color=\"#ff0000\"><!--#echo var=\"HOSTNAME\"--></font></b></p>
+<p><em><center><!--#echo var=\"DATE_LOCAL\"--></center></em></p>
+
+
+</body>
+</html>
+" >> ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web1.html
+
+echo "<p><b><center><a href=\"http://$IP_WEB1:80/\">Switch to another WEB server</a></center></b></p>
+<p><em>#############################################################</em></p>
+
+<p><u>IP Address Nginx Server:</u> <b><font size=\"+2\" color=\"#ff0000\"><!--#echo var=\"SERVER_ADDR\"--></font></b></br>
+<u>Name Nginx Server:</u> <b><font size=\"+2\" color=\"#ff0000\"><!--#echo var=\"HOSTNAME\"--></font></b></p>
+<p><em><center><!--#echo var=\"DATE_LOCAL\"--></center></em></p>
+
+
+</body>
+</html>
+" >> ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web2.html
 
 #Перезаписываем конфигурационный файл prometheus.yml
 echo "global:
