@@ -93,6 +93,25 @@ avg by (instance) (irate(process_cpu_seconds_total{job="$job"}[1m]))
 sum by (mode, instance) (rate(node_cpu_seconds_total{job="$job",mode="idle"}[1m]))
 100 - (avg by (instance) (rate(node_cpu_seconds_total{job="$job",mode="idle"}[1m])) * 100)
 
+avg by (mode,job) (irate(node_cpu_seconds_total{mode!='idle',job="$job"}[1m]))
+CPU Utilization-{{mode}}-{{job}}-{{cpu}}
 
-instance="$node",job="$job"
+(1-(sum(increase(node_cpu_seconds_total{mode='idle'}[1m]))by(instance)) / (sum(increase(node_cpu_seconds_total[1m]))by(instance))) *100
+
+(1-(sum(increase(node_cpu_seconds_total{job="$job",mode="idle"}[1m]))by(job))/(sum(increase(node_cpu_seconds_total{job="$job"}[1m]))by(job))) *100
+
+(sum(increase(node_cpu_seconds_total{mode='idle',job="$job"}[1m]))by(cpu,job)) / (sum(increase(node_cpu_seconds_total{job="$job"}[1m]))by(cpu,job)) *100
+
+##############################################################
+(sum(increase(node_cpu_seconds_total{mode="idle"}[1m]))by(cpu,job)) / (sum(increase(node_cpu_seconds_total{mode!="idle"}[1m]))by(cpu,job))
+
+rate(node_cpu_seconds_total{job="$job",mode="idle"}[1m]) / rate(node_cpu_seconds_total{job="$job"}[1m])
+
+#############################################
+sum by(job, mode) (rate(node_cpu_seconds_total{job="$job", mode="idle"}[1m]))
+
+(avg by (job) (irate(node_cpu_seconds_total{job="$job",mode="idle"}[1m]))) / (sum by(job) (rate(node_cpu_seconds_total{job="$job"}[1m]))) 
+
+(avg by (job) (irate(node_cpu_seconds_total{job="$job",mode!="idle"}[1m]))) / (sum by(job) (rate(node_cpu_seconds_total{job="$job"}[1m]))) 
+
 

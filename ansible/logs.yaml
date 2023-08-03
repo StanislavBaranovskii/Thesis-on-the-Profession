@@ -53,8 +53,8 @@
 
   - name: Push elasticsearch-7.17.11-amd64.deb (get_url - SHA256)
     ansible.builtin.get_url:
-      #url: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
-      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/9b2hYmXUAv63zg
+      #url: https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.17.11-amd64.deb
+      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/dfSAJ6K-Q6bbYQ
       dest: /tmp/elasticsearch-7.17.11-amd64.deb
       checksum: sha256:76ae0c7ce43bd8a5a6f2baf71b69c004f9d1e856e2edc22d42e491efe51d92bd
       #mode: '0740'
@@ -117,7 +117,7 @@
   - name: Push kibana-7.17.11-amd64.deb (get_url - SHA256)
     ansible.builtin.get_url:
       #url: https://artifacts.elastic.co/downloads/kibana/kibana-7.17.11-amd64.deb
-      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/9b2hYmXUAv63zg
+      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/U0H6S3aqATWTpA
       dest: /tmp/kibana-7.17.11-amd64.deb
       checksum: sha256:92737fd059dd8c2914929489ce10949d16f668209c25fbfb97f75468d52eb0cb
       #mode: '0740'

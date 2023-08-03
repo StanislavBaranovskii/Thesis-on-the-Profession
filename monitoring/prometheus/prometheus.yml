@@ -14,14 +14,14 @@ scrape_configs:
   - job_name: "web1"
     scrape_interval: 8s
     static_configs:
-      - targets: ['158.160.46.119:9100', '158.160.46.119:4040']
+      - targets: ['158.160.116.211:9100', '158.160.116.211:4040']
 
   - job_name: "web2"
     scrape_interval: 8s
     static_configs:
-      - targets: ['84.201.179.61:9100', '84.201.179.61:4040']
+      - targets: ['84.252.136.200:9100', '84.252.136.200:4040']
 
   - job_name: "prometheus"
     scrape_interval: 5s
     static_configs:
-      - targets: ['158.160.41.146:9090', '158.160.41.146:9100']
+      - targets: ['158.160.100.206:9090', '158.160.100.206:9100']

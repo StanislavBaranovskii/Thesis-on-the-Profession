@@ -30,4 +30,6 @@ ls -al /etc/nginx/nginx.conf
 ls -al /etc/prometheus-nginxlog-exporter.hcl
 -rw-r--r-- 1 root root 368 Aug  1 13:01 /etc/prometheus-nginxlog-exporter.hcl
 
-
+sudo apt update
+sudo apt install stress
+stress --cpu 2 --timeout 60 #Грузим процессор - 2 ядра
