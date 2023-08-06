@@ -19,13 +19,13 @@ setup.dashboards.enabled: true
 
 # =================================== Kibana ===================================
 setup.kibana:
-  host: "http://158.160.61.253:5601"
+  host: "http://10.128.0.32:5601"
 
 # ================================== Outputs ===================================
 
 # ---------------------------- Elasticsearch Output ----------------------------
 output.elasticsearch:
-  hosts: ["158.160.32.131:9200"]
+  hosts: ["10.128.0.31:9200"]
   username: "elastic"
   password: "elastic"
 

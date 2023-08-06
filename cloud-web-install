@@ -5,6 +5,7 @@
 
 #yc compute instance list
 
+
 #
 # Запускать после разворачивания LOGS (elk) и перед MONITORING  - (LOGS/ELK -> WEB -> MONITORING)
 #
@@ -13,24 +14,28 @@ WEB_VM1_NAME=vm-web1
 WEB_VM2_NAME=vm-web2
 
 ZONE=ru-central1-a
+IP_INT_WEB1=10.128.0.11
+IP_INT_WEB2=10.129.0.11
+
 
 MEMORY_SIZE=1GB
 DISK_SIZE=3 #GB
 
-echo [web] > ~/Thesis-on-the-Profession/ansible/hosts
-
+echo [web] >> ~/Thesis-on-the-Profession/ansible/hosts
+VM_INT_IP=$IP_INT_WEB1
 for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
 do
     yc compute instance get $VM_NAME &>/dev/null
     if [ $? -ne 0 ]; then
         echo "ВМ $VM_NAME не найдена. Создаём"
         #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
-        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
+        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4,address=$VM_INT_IP  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
         if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; exit 1; fi 
     else
         echo "ВМ $VM_NAME уже существует"
     fi
     ZONE=ru-central1-b
+    VM_INT_IP=$IP_INT_WEB2
 done
 
 #Ожидаем публикации IP создаваемых ВМ
@@ -97,29 +102,22 @@ scrape_configs:
   - job_name: \"web1\"
     scrape_interval: 8s
     static_configs:
-      - targets: ['$IP_WEB1:9100', '$IP_WEB1:4040']
+      - targets: ['$IP_INT_WEB1:9100', '$IP_INT_WEB1:4040']
 
   - job_name: \"web2\"
     scrape_interval: 8s
     static_configs:
-      - targets: ['$IP_WEB2:9100', '$IP_WEB2:4040']
+      - targets: ['$IP_INT_WEB2:9100', '$IP_INT_WEB2:4040']
 " > ~/Thesis-on-the-Profession/monitoring/prometheus/prometheus.yml
 
     
 cd ~/Thesis-on-the-Profession/ansible
+#ansible-playbook web.yaml --extra-vars="name_web1=$WEB_VM1_NAME ip_int_web1=$IP_INT_WEB1 name_web2=$WEB_VM2_NAME ip_int_web2=$IP_INT_WEB2"
 ansible-playbook web.yaml
+if [ $? -ne 0 ]; then echo "ОШИБКА. Ansible playbook ошибка выполнения сценария"; exit 1; fi
 
+#####################################################
+# L7-балансировщик (Application Load Balancer)
+#####################################################
 
-
-#tar czf - ~/Thesis-on-the-Profession/web/index.nginx-debian.html | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /var/web/html/index.nginx-debian.html
-#scp ~/Thesis-on-the-Profession/web/index.nginx-debian.html yc-user@$IP_WEB_VM1:/tmp/
-
-#tar czf - ~/Thesis-on-the-Profession/web/default | ssh yc-user@$IP_WEB_VM1 sudo tar -xvzf -C /etc/nginx/sites-enabled/default
-#scp ~/Thesis-on-the-Profession/web/default yc-user@$IP_WEB_VM1:/tmp/
-
-#sleep 1s
-
-#ansible -b web -m shell -a 'mv -f /tmp/index.nginx-debian.html /var/web/html/'
-#ansible -b web -m shell -a 'mv -f /tmp/default /etc/nginx/sites-enabled/'
-#ansible -b web -m shell -a 'systemctl restart nginx'
 

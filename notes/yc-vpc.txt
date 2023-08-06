@@ -1,0 +1,15 @@
+#Создаем каталог проекта в текущем облаке
+yc resource-manager folder create --name thesis-on-the-profession --description "Проект дипломной работы"
+
+#Задаем каталог по умолчанию - не обязательно
+#yc init --folder-name thesis-on-the-profession
+
+#? Во всех командах использовать флаг --folder-name thesis-on-the-profession -?
+
+#? Создаем сеть (VPC) -?
+yc vpc network create --folder-name thesis-on-the-profession --name poject-network --description "Сеть дипломной работы"
+
+#Создаем подсети (VPC)
+
+
+

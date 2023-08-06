@@ -1,0 +1,135 @@
+#!/bin/bash
+#
+
+WEB_VM1_NAME=vm-web1
+WEB_VM2_NAME=vm-web2
+
+IP_INT_WEB1=10.128.0.11
+IP_INT_WEB2=10.129.0.11
+
+#
+#Целевая группа (Target group)
+#
+echo -e "# 1. Целевая группа (Target group) #\n"
+yc alb target-group get project-web-target-group &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Целевая группа не найдена. Создаём..."
+    yc alb target-group create project-web-target-group --description="ALB:Целевая группа" --target subnet-name=default-ru-central1-a,ip-address=$IP_INT_WEB1 --target subnet-name=default-ru-central1-b,ip-address=$IP_INT_WEB2
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Целевая группа не создана."; exit 1; fi 
+else
+    echo "## Целевая группа уже существует."
+    yc alb target-group get project-web-target-group
+fi
+
+#
+#Группа бэкендов (Backend group)
+#
+echo -e "# 2. Группа бэкендов (Backend group) #\n"
+yc alb backend-group get project-web-backend-group &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Группа бэкендов не найдена. Создаём..."
+    yc alb backend-group create project-web-backend-group --description="ALB:Группа бэкендов"
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа бэкендов не создана."; exit 1; fi 
+else
+    echo "## Группа бэкендов уже существует."
+    yc alb backend-group get project-web-backend-group
+fi
+#Бэкенд (Backend)
+echo -e "# 2.1. Бэкенд (Backend) #\n"
+yc alb backend-group get project-web-backend-group |grep project-backend &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Бэкенд в группе бэкендов не найдена. Создаём..."
+    #yc alb backend-group add-http-backend   --backend-group-name project-web-backend-group   --name project-backend   --weight 1   --port 80   --target-group-name=project-web-target-group   --panic-threshold 90   --http-healthcheck port=80,healthy-threshold=10,unhealthy-threshold=15,timeout=10s,interval=2s,path=/ &>/dev/null
+    yc alb backend-group add-http-backend   --backend-group-name project-web-backend-group   --name project-backend   --weight 1   --port 80   --target-group-id=$(yc alb target-group get project-web-target-group |grep -e "^id: " |awk '{print $ 2}')   --panic-threshold 90   --http-healthcheck port=80,healthy-threshold=10,unhealthy-threshold=15,timeout=10s,interval=2s,path=/
+    if [ $? -ne 0 ]; then echo "О## ШИБКА. Бэкенд не создан."; exit 1; fi 
+else
+    echo "## Бэкенд в группе бэкендов уже существует."
+    yc alb backend-group get project-web-backend-group
+fi
+
+#
+#HTTP-роутер (HTTP routers)
+#
+echo -e "# 3. HTTP-роутер (HTTP routers) #\n"
+yc alb http-router get project-http-router &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## HTTP-роутер не найден. Создаём..."
+    yc alb http-router create project-http-router --description "ALB:HTTP роутер"
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. HTTP-роутер не создан."; exit 1; fi 
+else
+    echo "## HTTP-роутер уже существует."
+    yc alb http-router get project-http-router
+fi
+#Виртуальный хост (VHost)
+echo -e "# 3.1. Виртуальный хост (VHost) #\n"
+yc alb http-router get project-http-router |grep project-vhost &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Виртуальный хост не найден. Создаём..."
+    yc alb virtual-host create project-vhost --http-router-name project-http-router
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Виртуальный хост не создан."; exit 1; fi 
+else
+    echo "## Виртуальный хост уже существует."
+    yc alb http-router get project-http-router
+fi
+#Маршрут (Route)
+echo -e "# 3.2. Маршрут (Route) #\n"
+yc alb http-router get project-http-router |grep project-route &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Маршрут не найден. Создаём..."
+    yc alb virtual-host append-http-route project-route --http-router-name project-http-router --virtual-host-name project-vhost --prefix-path-match / --backend-group-name project-web-backend-group
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Виртуальный хост не создан."; exit 1; fi 
+else
+    echo "## Маршрут уже существует."
+    yc alb http-router get project-http-router
+fi
+
+#
+#L7-балансировщик (Application Loader Balanced)
+#
+echo -e "# 4. L7-балансировщик (Application Loader Balanced) #\n"
+yc alb load-balancer get project-alb &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## L7-балансировщик не найден. Создаём..."
+    yc alb load-balancer create project-alb --description ALB --network-name default --location subnet-name=default-ru-central1-a,zone=ru-central1-a  --location subnet-name=default-ru-central1-b,zone=ru-central1-b
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. L7-балансировщик не создан."; exit 1; fi 
+else
+    echo "## L7-балансировщик уже существует."
+    yc alb load-balancer get project-alb
+fi
+#Обработчик (Listener)
+echo "# 4.1. Обработчик (Listener) #"
+yc alb load-balancer get project-alb |grep alb-listener &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Обработчик не найден. Создаём..."
+    yc alb load-balancer add-listener --name project-alb --listener-name alb-listener --external-ipv4-endpoint port=80 --http-router-name project-http-router
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Обработчик не создан."; exit 1; fi 
+else
+    echo "## Обработчик уже существует."
+    yc alb load-balancer get project-alb
+fi
+
+#
+#Отвязываем публичный IP от ВМ из целевой группы
+#
+echo -e "\n# Отвязываем публичный IP адрес от ВМ из целевой группы #\n"
+for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
+do
+    yc compute instance get $VM_NAME &>/dev/null
+    if [ $? -eq 0 ]; then
+        echo "## ВМ $VM_NAME найдена.."
+        yc compute instance remove-one-to-one-nat --name=$VM_NAME --network-interface-index=0 --async
+        if [ $? -ne 0 ]; then echo "## ОШИБКА. Публичный IP адрес от ВМ $VM_NAME не отвязан"; exit 1; fi 
+    fi
+done
+# Ожидаем освобождения публичных IP адресов
+echo "## Ожидаем освобождения публичных IP адресов..."
+for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
+do
+    while [ -n "$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)" ]
+    do
+        sleep 2
+    done
+    echo "## ВМ $VM_NAME - публичных IP адрес освобожден"
+done
+
+

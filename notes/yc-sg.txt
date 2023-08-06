@@ -1,0 +1,31 @@
+#
+#Создаем группу безопасности
+#
+
+#yc vpc security-group --help
+#yc vpc security-group list
+#yc vpc security-group list --folder-id b1guusc7jkhguhsmba7e
+
+#yc vpc security-group create --name sg-web --description "SG для WEB" --rule description="from Any to Web Server",direction=ingress,port=80,protocol=tcp,v4-cidrs=[0.0.0.0/0] --network-id enp7h0pg1boe7aqbor9g
+
+yc vpc security-group create --name sg-web --description "SG для WEB" --rule description="in web server",direction=ingress,port=80,protocol=tcp,v4-cidrs=[0.0.0.0/0] --network-id enp7h0pg1boe7aqbor9g --rule description="from internal Prometheus to Node Exporter",direction=ingress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/24] --rule description="from internal Prometheus to Nginx Log Exporter",direction=ingress,port=4040,protocol=tcp,v4-cidrs=[10.128.0.0/24] --rule description="loadbalancer healthchecks",direction=ingress,port=any,protocol=any,predefined=loadbalancer_healthchecks --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/24]
+
+#yc vpc security-group update-rules --name sg-web --add-rule description="self",direction=ingress,port=any,protocol=any,predefined=self_security_group
+
+#yc vpc security-group update-rules --name sg-web --add-rule description="from internal Prometheus to Node Exporter",direction=ingress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/24]
+
+#yc vpc security-group get --name sg-web
+
+#yc vpc security-group delete --name sg-web
+
+#
+# Подключаем группу безопасности к сетевому интерфейсу к ВМ
+#
+
+#yc compute instance update-network-interface --help
+
+yc compute instance update-network-interface --name vm-web1 --network-interface-index 0 --security-group-id enpur5om1jchkh24urdc
+
+#yc compute instance update-network-interface --name vm-web1 --network-interface-index 0 --clear-security-groups
+
+

@@ -128,6 +128,14 @@
   gather_facts: false
   
   tasks:
+  
+  - name: Copy ssh-key id_ed25519.pub (for bastion)
+    ansible.builtin.copy:
+      src: ~/.ssh/id_ed25519.pub
+      dest: /home/yc-user/.ssh/id_ed25519.pub
+      owner: yc-user
+      group: yc-user
+      mode: '0600'
       
   - name: Update apt cache
     ansible.builtin.apt:

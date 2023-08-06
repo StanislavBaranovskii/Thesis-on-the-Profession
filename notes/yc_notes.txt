@@ -40,45 +40,63 @@ ansible all -m ping
 ansible -b all -m shell -a 'apt update'
 ansible-playbook my.yml
 
-#
+
+####################################################
 #Target group
 #
 yc vpc subnet list
 yc compute instance list
-yc alb target-group create web-target-group   --target subnet-name=default-ru-central1-a,ip-address=10.128.0.9   --target subnet-name=default-ru-central1-b,ip-address=10.129.0.27
+
+yc alb target-group create project-web-target-group --description="ALB:Целевая группа" --target subnet-name=default-ru-central1-a,ip-address=10.128.0.11 --target subnet-name=default-ru-central1-b,ip-address=10.129.0.11
+
 yc alb target-group list
 yc alb target-group get web-target-group
 yc alb target-group delete web-target-group
 
-#
+####################################################
 #Backend group
 #
-yc alb backend-group create web-backend-group
 yc alb target-group list
-yc application-load-balancer backend-group add-http-backend   --backend-group-name web-backend-group   --name backend1   --weight 1   --port 80   --target-group-id ds797cqi0j37c051a599   --panic-threshold 90   --http-healthcheck port=80,healthy-threshold=10,unhealthy-threshold=15,timeout=10s,interval=2s,path=/
+
+yc alb backend-group create project-web-backend-group --description="ALB:Группа бэкендов"
+
+yc alb backend-group add-http-backend   --backend-group-name=project-web-backend-group   --name backend1   --weight 1   --port 80   --target-group-id ds797cqi0j37c051a599   --panic-threshold 90   --http-healthcheck port=80,healthy-threshold=10,unhealthy-threshold=15,timeout=10s,interval=2s,path=/
+
+yc alb backend-group add-http-backend project-web-backend-group --name project-backend --target-group-name project-web-target-group --http-healthcheck port=80,path=/
+
+yc alb backend-group add-http-backend backend   --backend-group-name=project-web-backend-group   --name backend1    --port 80   --target-group-id ds776k6rgm6ku0uhmcjb   --http-healthcheck port=80,timeout=10s,interval=2s,path=/
+
 yc alb backend-group list
 yc alb backend-group delete web-backend-group
 
-#
+###################################################
 #HTTP routers
 #
-yc alb http-router create web-http-router
-yc alb virtual-host create <virtual_host_name> \
-  --http-router-name <HTTP_router_name> \
-  --authority your-domain.foo.com \
-  --modify-request-header name=Accept-Language,append=ru-RU
+yc alb http-router create --name project-http-router --description "ALB:http-router"
+
+#Добавляем виртуальный хост
+yc alb virtual-host create project-vhost --http-router-name project-http-router
+
+#Добавляем маршрут
+yc application-load-balancer virtual-host append-http-route project-route --http-router-name project-http-router --virtual-host-name project-vhost --prefix-path-match / --backend-group-name project-web-backend-group
 
 yc alb http-router list
-yc application-load-balancer virtual-host list --http-router-name web-http-router
+yc application-load-balancer virtual-host list --http-router-name project-web-http-router
 
 yc alb http-router list
 
-#
+##################################################
 #load balancer 
 #
 yc vpc network list
-yc alb load-balancer create my-balancer   --network-name default   --location subnet-name=default-ru-central1-a,zone=ru-central1-a  --location subnet-name=default-ru-central1-b,zone=ru-central1-b
+
+yc alb load-balancer create --name project-alb --description ALB --network-name default --location subnet-name=default-ru-central1-a,zone=ru-central1-a  --location subnet-name=default-ru-central1-b,zone=ru-central1-b
+
 # Добавить обработчик с http router
+yc alb load-balancer add-listener --name project-alb --listener-name alb-listener --external-ipv4-endpoint port=80 --http-router-name project-web-http-router
+
+yc alb load-balancer create my-balancer   --network-name default   --location subnet-name=default-ru-central1-a,zone=ru-central1-a  --location subnet-name=default-ru-central1-b,zone=ru-central1-b
+
 yc alb load-balancer list
 
 yc alb load-balancer autoscale --help
@@ -92,6 +110,8 @@ yc alb load-balancer logging --help
 #yc alb target-group delete <Имя_группы>
 #yc compute instance stop $WEB_VM_NAME1
 #yc compute instance delete $WEB_VM_NAME1
+
+
 
 ##################################################################################
 #Docker
@@ -126,12 +146,23 @@ yc resource-manager cloud list
 yc resource-manager cloud get --id b1g5d1h1bstlaq9so8fs
 
 
-#Каталог проекта
+#Каталог проекта - при создании каталога создается и VPC: сеть (network) с именим default и три подсети (subnet) default-ru-central1-a/b/c с именами ru-central1-a/b/c
 yc resource-manager folder --help #управление каталогами проектов
 yc resource-manager folder list
 yc resource-manager folder create --name thesis-on-the-profession --description "Проект дипломной работы"
 yc resource-manager folder get --name thesis-on-the-profession
 
+
+yc vpc --help
+yc vpc network --help
+yc vpc network list
+yc vpc subnet --help
+yc vpc subnet list
+yc vpc address --help
+yc vpc address list #список используемых/занятых IP
+yc vpc address get --id e9bv98v53akur71255t6
+
+https://cloud.yandex.ru/docs/getting-started/individuals/configure-network
 
 
 yc iam service-account --help #управление сервисным аккаунтом
@@ -152,4 +183,14 @@ yc resource-manager folder add-access-binding <ID folder> \
 yc resource-manager folder add-access-binding b1gffumnvmraa0eon2o3   --role editor   --subject serviceAccount:aje76icm2mqfijvu0c5s
 
 
+#################################################################################
+# Отвязываем от ВМ публичный IP-адрес
+yc compute instance remove-one-to-one-nat --name=<имя_ВМ> --network-interface-index=0
 
+
+#################################################################################
+# Создание группы безопастности для фильтрации трафика
+yc vpc security-group create \
+  --name test-sg-cli \
+  --rule "direction=ingress,port=443,protocol=tcp,v4-cidrs=[10.0.0.0/24]" \
+  --network-id c645mh47vscba1d64tbs

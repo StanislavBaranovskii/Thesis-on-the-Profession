@@ -13,23 +13,27 @@ LOGS_VM1_NAME=vm-elastic
 LOGS_VM2_NAME=vm-kibana
 
 ZONE=ru-central1-a
+INT_IP_ELASTIC=10.128.0.31 #Elasticsearch
+INT_IP_KIBANA=10.128.0.32 #Kibana
 
 MEMORY_SIZE=4GB
 DISK_SIZE=10 #GB
 
 echo [logs] > ~/Thesis-on-the-Profession/ansible/hosts
 
+VM_INT_IP=$INT_IP_ELASTIC
 for VM_NAME in $LOGS_VM1_NAME $LOGS_VM2_NAME
 do
     yc compute instance get $VM_NAME &>/dev/null
     if [ $? -ne 0 ]; then
         echo "ВМ $VM_NAME не найдена. Создаём"
         #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
-        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
+        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4,address=$VM_INT_IP  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
         if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; exit 1; fi 
     else
         echo "ВМ $VM_NAME уже существует"
     fi
+    VM_INT_IP=$INT_IP_KIBANA
 done
 
 #Ожидаем публикации IP создаваемых ВМ
@@ -57,18 +61,23 @@ yc compute instance list
 
 echo "server.port: 5601
 server.host: \"0.0.0.0\"" > ~/Thesis-on-the-Profession/logs/kibana.yml
-echo "elasticsearch.hosts: [\"http://$IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/kibana.yml
+echo "elasticsearch.hosts: [\"http://$INT_IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/kibana.yml
 echo "server.publicBaseUrl: \"http://$IP_KIBANA:5601/\"
 elasticsearch.username: \"kibana_system\"
 elasticsearch.password: \"elastic\"" >> ~/Thesis-on-the-Profession/logs/kibana.yml
 
 
 echo "filebeat.inputs:
+#- type: filestream
+#  id: my-filestream-id
+#  enabled: false
+#  paths:
+#    - /var/log/*.log
 - type: filestream
-  id: my-filestream-id
-  enabled: false
+  id: nginx-filestream-id
+  enabled: true
   paths:
-    - /var/log/*.log
+    - /var/log/nginx/*.log
 
 # ============================== Filebeat modules ==============================
 filebeat.config.modules:
@@ -85,7 +94,7 @@ setup.dashboards.enabled: true
 # =================================== Kibana ===================================
 setup.kibana:" > ~/Thesis-on-the-Profession/logs/filebeat.yml
 
-echo "  host: \"http://$IP_KIBANA:5601\"
+echo "  host: \"http://$INT_IP_KIBANA:5601\"
 " >> ~/Thesis-on-the-Profession/logs/filebeat.yml
 
 echo "# ================================== Outputs ===================================
@@ -93,7 +102,7 @@ echo "# ================================== Outputs =============================
 # ---------------------------- Elasticsearch Output ----------------------------
 output.elasticsearch:" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
 
-echo "  hosts: [\"$IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
+echo "  hosts: [\"$INT_IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
 
 echo "  username: \"elastic\"
   password: \"elastic\"
@@ -108,13 +117,13 @@ processors:
 
 # ============================= X-Pack Monitoring ==============================
 monitoring.enabled: true
-" >> ~/Thesis-on-the-Profession/logs/filebeat.yaml
+" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
 
 
 #sleep 1s
 
 cd ~/Thesis-on-the-Profession/ansible
-ansible-playbook logs.yml
+ansible-playbook logs.yaml
 
 
 

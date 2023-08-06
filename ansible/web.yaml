@@ -240,4 +240,23 @@
       name: prometheus-nginxlog-exporter
       state: started
 
+
+#- name: WEB Application load balancer
+#  #become: true
+#  hosts: 127.0.0.1
+#  connection: local
+#  gather_facts: false
+#  pre_tasks:
+#  - name: remove-one-to-one-nat WEB1
+#    ansible.builtin.command: yc compute instance remove-one-to-one-nat --name={{ name_web1 }} --network-interface-index=0
+#  - name: remove-one-to-one-nat WEB2
+#    ansible.builtin.command: yc compute instance remove-one-to-one-nat --name={{ name_web2 }} --network-interface-index=0
+#  tasks:
+#  - name: Create target group
+#    ansible.builtin.shell: yc alb target-group create project-web-target-group --description="ALB:Целевая группа" --target subnet-name=default-ru-central1-a,ip-address={{ ip_int_web1 }} --target subnet-name=default-ru-central1-b,ip-address={{ ip_int_web2 }}
+#    register: yc
+    
+#  - name: Print
+#    ansible.builtin.debug: msg={{ yc.stdout_lines }}
+  
 ...

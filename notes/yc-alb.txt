@@ -1,0 +1,69 @@
+
+#Target group
+#
+#yc vpc subnet list
+#yc compute instance list
+
+yc alb target-group create project-web-target-group --description="ALB:Целевая группа" --target subnet-name=default-ru-central1-a,ip-address=10.128.0.11 --target subnet-name=default-ru-central1-b,ip-address=10.129.0.11
+
+#yc alb target-group list
+#yc alb target-group get web-target-group
+#yc alb target-group delete web-target-group
+
+####################################################
+#Backend group
+#
+#yc alb target-group list
+
+yc alb backend-group create project-web-backend-group --description="ALB:Группа бэкендов"
+
+#Добавляем бакенд
+yc alb backend-group add-http-backend   --backend-group-name project-web-backend-group   --name project-backend   --weight 1   --port 80   --target-group-id=ds7cmk5phntocal0clfl   --panic-threshold 90   --http-healthcheck port=80,healthy-threshold=10,unhealthy-threshold=15,timeout=10s,interval=2s,path=/
+
+#yc alb backend-group list
+#yc alb target-group get web-target-group
+#yc alb backend-group delete project-web-backend-group
+
+###################################################
+#HTTP routers
+#
+yc alb http-router create project-http-router --description "ALB:HTTP роутер"
+
+#Добавляем виртуальный хост
+yc alb virtual-host create project-vhost --http-router-name project-http-router
+
+#Добавляем маршрут
+yc alb virtual-host append-http-route project-route --http-router-name project-http-router --virtual-host-name project-vhost --prefix-path-match / --backend-group-name project-web-backend-group
+
+#yc alb http-router list
+#yc application-load-balancer virtual-host list --http-router-name project-web-http-router
+
+
+##################################################
+#load balancer 
+#
+#yc vpc network list
+
+yc alb load-balancer create project-alb --description ALB --network-name default --location subnet-name=default-ru-central1-a,zone=ru-central1-a  --location subnet-name=default-ru-central1-b,zone=ru-central1-b
+
+# Добавить обработчик с http router
+yc alb load-balancer add-listener --name project-alb --listener-name alb-listener --external-ipv4-endpoint port=80 --http-router-name project-http-router
+
+#yc alb load-balancer list
+#yc alb load-balancer get project-alb
+
+#yc alb load-balancer autoscale --help
+#yc alb load-balancer logging --help
+
+
+#yc alb load-balancer delete <ID or name of the load balancer>
+#yc alb virtual-host delete <virtual_host_name> 
+#yc alb http-router delete <Имя>
+#yc alb backend-group delete web-backend-group
+#yc alb target-group delete <Имя_группы>
+#yc compute instance stop $WEB_VM_NAME1
+#yc compute instance delete $WEB_VM_NAME1
+
+
+
+

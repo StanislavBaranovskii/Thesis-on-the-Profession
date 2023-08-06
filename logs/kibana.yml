@@ -1,6 +1,6 @@
 server.port: 5601
 server.host: "0.0.0.0"
-elasticsearch.hosts: ["http://158.160.32.131:9200"]
-server.publicBaseUrl: "http://158.160.61.253:5601/"
+elasticsearch.hosts: ["http://10.128.0.31:9200"]
+server.publicBaseUrl: "http://62.84.119.8:5601/"
 elasticsearch.username: "kibana_system"
 elasticsearch.password: "elastic"
