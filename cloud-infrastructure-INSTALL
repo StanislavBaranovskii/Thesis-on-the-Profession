@@ -1,0 +1,202 @@
+#!/bin/bash
+#
+
+########################################################################
+#Создание виртуального частного облака (Virtual Private Cloud):
+# - Создание каталога (Folder)
+# - Создание сети (Network) и подсети (Subnet)
+########################################################################
+
+FOLDER_NAME=thesis-on-the-profession
+
+NETWORK_NAME=default
+ZONE_A_NAME=ru-central1-a
+SUBNET_ZA_NAME=$NETWORK_NAME-$ZONE_A_NAME
+RANGE_ZA_IP=10.128.0.0/24
+ZONE_B_NAME=ru-central1-b
+SUBNET_ZB_NAME=$NETWORK_NAME-$ZONE_B_NAME
+RANGE_ZB_IP=10.129.0.0/24
+
+echo "########################################################################
+#Создание виртуального частного облака (Virtual Private Cloud):
+# - Создание каталога (Folder)
+# - Создание сети (Network) и подсети (Subnet)
+########################################################################"
+
+#Проверяем наличие облака
+yc resource-manager cloud list &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "Облако не найдено или нет интерйфейса командной строки Yandex Cloud"
+    exit 1
+else
+    echo "Облако найдено"
+fi
+
+#Проверяем / создаем каталог проекта (VPC)
+
+#yc resource-manager folder list |grep "$FOLDER_NAME"
+yc resource-manager folder get --name $FOLDER_NAME &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "Каталог $FOLDER_NAME проекта в текущем облаке не найден. Создаем..."
+    yc resource-manager folder create --name $FOLDER_NAME --description "Проект дипломной работы" &>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "ОШИБКА! Каталог $FOLDER_NAME проекта не создан"
+        exit 1
+    else
+        echo "Каталог $FOLDER_NAME проекта создан"
+    fi
+else
+    echo "Каталог $FOLDER_NAME проекта уже существует"
+fi
+
+#Назначаем созданный каталог в YC CLI текущим
+echo "Назначаем каталог $FOLDER_NAME в YC CLI текущим"
+yc config set folder-name $FOLDER_NAME
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА! Каталог $FOLDER_NAME в настройках YC CLI текущим не выбран"
+    exit 1
+fi
+
+#Проверяем / создаем сеть и две подсети (VPC)
+
+yc vpc network get $NETWORK_NAME &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "Сеть $NETWORK_NAME в каталоге $FOLDER_NAME не найдена. Создаем..."
+    yc vpc network create --name $NETWORK_NAME --description "Сеть дипломной работы" &>/dev/null
+    #yc vpc network create --folder-name $FOLDER_NAME --name $NETWORK_NAME --description "Сеть дипломной работы" &>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "ОШИБКА! Сеть $NETWORK_NAME в каталоге $FOLDER_NAME не создан"
+        exit 1
+    else
+        echo "Сеть $NETWORK_NAME в каталоге $FOLDER_NAME создан"
+    fi
+else
+    echo "Сеть $NETWORK_NAME в каталоге $FOLDER_NAME уже существует"
+fi
+
+ZONE_NAME=$ZONE_A_NAME
+RANGE_IP=$RANGE_ZA_IP
+for SUBNET_NAME in $SUBNET_ZA_NAME $SUBNET_ZB_NAME
+do
+    yc vpc subnet get $SUBNET_NAME &>/dev/null
+    if [ $? -ne 0 ]; then
+        echo "Подсеть $SUBNET_NAME не найдена. Создаем..."
+        yc vpc subnet create --name $SUBNET_NAME --zone $ZONE_NAME --network-name $NETWORK_NAME --range $RANGE_IP &>/dev/null
+        #yc vpc subnet create --folder-name $FOLDER_NAME --name $SUBNET_NAME --description "Подсеть зоны А" --zone $ZONE_NAME --network-name $NETWORK_NAME --range $RANGE_IP &>/dev/null
+        if [ $? -ne 0 ]; then
+            echo "ОШИБКА! Подсеть $SUBNET_NAME не создана"
+            exit 1
+        else
+            echo "Подсеть $SUBNET_NAME создана"
+        fi
+    else
+        echo "Подсеть $SUBNET_NAME уже существует"
+    fi
+    ZONE_NAME=$ZONE_B_NAME
+    RANGE_IP=$RANGE_ZB_IP
+done
+
+CURRENT_FOLDER_NAME=$(yc config get folder-name)
+echo -e "\n # Текущий каталог : $CURRENT_FOLDER_NAME \n"
+echo " # Список сетей в каталоге $CURRENT_FOLDER_NAME :"
+yc vpc network list
+echo " # Список подсетей в каталоге $CURRENT_FOLDER_NAME (сеть: $NETWORK_NAME) :"
+yc vpc subnet list
+
+
+########################################################################
+#Создание ВМ и целевых сервисов внутри ВМ
+########################################################################
+
+echo "########################################################################
+#Создание ВМ и целевых сервисов внутри ВМ
+########################################################################"
+
+#Проверяем / создаем пару ssh ключей
+if [ ! -f ~/.ssh/id_ed25519.pub ]; then
+    echo "ssh-key файл ~/.ssh/id_ed25519.pub не найден. Создаём.."
+    ssh-keygen -t ed25519
+fi
+
+#Разворачиваем две ВМ: Elasticsearch и Kibana
+echo -e "\n # Разворачиваем ВМ Elasticsearch и Kibana \n"
+~/Thesis-on-the-Profession/cloud-elk-install
+#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Разворачиваем две ВМ: web сервера
+echo -e "\n # Разворачиваем ВМ web сервера \n"
+~/Thesis-on-the-Profession/cloud-web-install
+#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Разворачиваем две ВМ: Prometheus и Grafana
+echo -e "\n # Разворачиваем ВМ Prometheus и Grafana \n"
+~/Thesis-on-the-Profession/cloud-monitoring-install
+#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+
+########################################################################
+#Финишная конфигурация ВМ в рамках VPC:
+# - Создание групп безопасности (Security Group),
+# - Создание L7-балансировщика (Application Load Balancer),
+# - Освобождение неиспользуемых публичные IP адресов ВМ.
+# - 
+########################################################################
+
+echo "########################################################################
+#Финишная конфигурация ВМ в рамках VPC:
+# - Создание групп безопасности (Security Group),
+# - Создание L7-балансировщика (Application Load Balancer),
+# - Освобождение неиспользуемых публичные IP адресов ВМ.
+# - Планировщик создания снимков дисков ВМ
+########################################################################"
+
+#Создаем группы безопасности
+echo -e "\n # Создаём группы безопасности \n"
+~/Thesis-on-the-Profession/cloud-sg-create
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Освобождаем неиспользуемые публичные IP адреса
+echo -e "\n # Освобождаем неиспользуемых публичные IP адреса \n"
+~/Thesis-on-the-Profession/cloud-remove-one-to-one-nat
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Планировщик создания снимков дисков ВМ
+echo -e "\n # Планировщик создания снимков дисков ВМ \n"
+~/Thesis-on-the-Profession/cloud-snapshot-shed-create
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Создаём L7-балансировщик
+echo -e "\n # Создаём L7-балансировщик \n"
+#~/Thesis-on-the-Profession/cloud-alb-create
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+
+########################################################################
+#Облачная инфраструктура развернута.
+#Печатаем список созданных ресурсов.
+########################################################################
+
+echo "########################################################################
+#Облачная инфраструктура развернута.
+#Печатаем список созданных ресурсов.
+########################################################################"
+
+
+echo -e "\n # Текущий каталог : $CURRENT_FOLDER_NAME \n"
+echo " # Список сетей в каталоге $CURRENT_FOLDER_NAME :"
+yc vpc network list
+echo " # Список подсетей в каталоге $CURRENT_FOLDER_NAME (сеть: $NETWORK_NAME) :"
+yc vpc subnet list
+
+echo " # Список созданных ВМ :"
+yc compute instance list
+
+PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -e "              address: " |awk '{print $ 2}')
+echo -e " #\n # Публичный IP адрес балансера alb : $PUB_IP_ALB \n #\n"
+
+echo "Список созданных групп безопасности:"
+yc vpc security-group get
+
+echo "Список расписаний создания снимков дисков:"
+yc compute snapshot-schedule list
+

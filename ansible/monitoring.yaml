@@ -51,7 +51,7 @@
 #      dest: /etc/systemd/system/
 
   - name: Copy prometheus.yml & prometheus.service files
-    copy: src={{ item.0 }} dest={{ item.1 }}
+    ansible.builtin.copy: src={{ item.0 }} dest={{ item.1 }}
     with_together:
       - [ '~/Thesis-on-the-Profession/monitoring/prometheus/prometheus.service', '~/Thesis-on-the-Profession/monitoring/prometheus/prometheus.yml' ]
       - [ '/tmp/', '/tmp/' ]
@@ -129,10 +129,18 @@
   
   tasks:
   
-  - name: Copy ssh-key id_ed25519.pub (for bastion)
+  - name: Copy public ssh-key id_ed25519.pub (for bastion)
     ansible.builtin.copy:
       src: ~/.ssh/id_ed25519.pub
       dest: /home/yc-user/.ssh/id_ed25519.pub
+      owner: yc-user
+      group: yc-user
+      mode: '0644'
+
+  - name: Copy private ssh-key id_ed25519 (for bastion)
+    ansible.builtin.copy:
+      src: ~/.ssh/id_ed25519
+      dest: /home/yc-user/.ssh/id_ed25519
       owner: yc-user
       group: yc-user
       mode: '0600'

@@ -87,12 +87,12 @@
       command: /usr/share/elasticsearch/bin/elasticsearch-setup-passwords interactive
       responses:
         (.*)Please confirm that you would like to continue(.*): "y"
-        (.*)elastic(.*): "elastic"
-        (.*)apm_system(.*): "elastic"
-        (.*)kibana_system(.*): "elastic"
-        (.*)logstash_system(.*): "elastic"
-        (.*)beats_system(.*): "elastic"
-        (.*)remote_monitoring_user(.*): "elastic"
+        (.*)elastic(.*): "Elastic123"
+        (.*)apm_system(.*): "Elastic123"
+        (.*)kibana_system(.*): "Elastic123"
+        (.*)logstash_system(.*): "Elastic123"
+        (.*)beats_system(.*): "Elastic123"
+        (.*)remote_monitoring_user(.*): "Elastic123"
         
     
 - name: Kibana

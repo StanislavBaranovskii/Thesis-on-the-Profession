@@ -2,6 +2,11 @@
 #
 
 
+echo -e "\n ### ВНИМАНИЕ ! ###\n"
+echo -e " ### Планируется удаление ВСЕХ ресурсов в каталоге $(yc config get folder-name) ! \n"
+
+echo "Продолжить ?"
+
 
 
 
@@ -90,5 +95,22 @@ do
 done
 yc vpc security-group list
 
+#Snapshot-schedule
+echo "Snapshot-schedule..."
+for NAME in $(yc compute snapshot-schedule list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove snapshot-schedule: $NAME"
+  yc compute snapshot-schedule delete $NAME
+done
+yc compute snapshot-schedule list
+
+#Disk Snapshot
+echo "Disk Snapshot..."
+for NAME in $(yc compute snapshot list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove snapshot: $NAME"
+  yc compute snapshot delete $NAME
+done
+yc compute snapshot list
 
 

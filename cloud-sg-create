@@ -3,32 +3,46 @@
 
 WEB_VM1_NAME=vm-web1
 WEB_VM2_NAME=vm-web2
-
-
+MONS_VM1_NAME=vm-prometheus
 MONS_VM2_NAME=vm-grafana
+LOGS_VM1_NAME=vm-elastic
+LOGS_VM2_NAME=vm-kibana
+
+
+#INT_IP_PROMETHEUS=10.128.0.21 # Prometheus
 INT_IP_GRAFANA=10.128.0.22 # Grafana + Bastion
+
+NETWORK_NAME=default
 
 #IP_INT_WEB1=10.128.0.11
 #IP_INT_WEB2=10.129.0.11
 
+NETWORK_ID=$(yc vpc network get --name $NETWORK_NAME |grep -e "^id: " |awk '{print $ 2}')
+
 #
-#Группа безопасности (security-group) для WEB
+#Группа безопасности sg-web для WEB
 #
-echo -e "# Группа безопасности (security-group) для WEB #\n"
+echo -e "# Группа безопасности sg-web для WEB #\n"
 yc vpc security-group get sg-web &>/dev/null
 if [ $? -ne 0 ]; then
     echo "## Группа безопасности для WEB не найдена. Создаём..."
-    yc vpc security-group create --name sg-web --description "SG для WEB" --rule description="in web server",direction=ingress,port=80,protocol=tcp,v4-cidrs=[0.0.0.0/0] --network-id enp7h0pg1boe7aqbor9g --rule description="from internal Prometheus to Node Exporter",direction=ingress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/24] --rule description="from internal Prometheus to Nginx Log Exporter",direction=ingress,port=4040,protocol=tcp,v4-cidrs=[10.128.0.0/24] --rule description="loadbalancer healthchecks",direction=ingress,port=any,protocol=any,predefined=loadbalancer_healthchecks --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/24] --rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/24]
+    yc vpc security-group create --name sg-web --description "SG для WEB" --network-id $NETWORK_ID \
+    --rule description="in web server",direction=ingress,port=80,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
+    --rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
+    --rule description="from internal to metrics node-exporter",direction=ingress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
+    --rule description="from internal to metrics nginxlog-exporter",direction=ingress,port=4040,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
+    --rule description="loadbalancer healthchecks",direction=ingress,port=any,protocol=any,predefined=loadbalancer_healthchecks \
+    --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
+    --rule description="to internal Kibana from Filebeat",direction=egress,port=5601,protocol=tcp,v4-cidrs=[10.128.0.0/16]
     if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для WEB не создана."; exit 1; fi 
 else
     echo "## Группа безопасности для WEB уже существует."
     yc vpc security-group get sg-web
 fi
-
 #
 #Подключаем группу безопасности для WEB к сетевому интерфейсу ВМ целевой группы
 #
-echo -e "# Подключаем группа безопасности (security-group) для WEB #\n # к сетевому интерфейсу ВМ целевой группы #\n"
+echo -e "# Подключаем группа безопасности для WEB #\n # к сетевому интерфейсу ВМ целевой группы #\n"
 SG_WEB_ID=$(yc vpc security-group get --name sg-web |grep -e "^id: " |awk '{print $ 2}')
 for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
 do
@@ -37,21 +51,112 @@ do
     if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности сетевому интерфейсу ВМ $VM_NAME не назначена."; exit 1; fi
 done
 
+
 #
-#Группа безопасности (security-group) для Prometheus
+#Группа безопасности sg-prometheus для Prometheus
 #
+echo -e "# Группа безопасности sg-prometheus для Prometheus #\n"
+yc vpc security-group get sg-prometheus &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Группа безопасности для Prometheus. Создаём..."
+    yc vpc security-group create --name sg-prometheus --description "SG для Prometheus" --network-id $NETWORK_ID \
+    --rule description="from internal Grafana to Prometheus",direction=ingress,port=9090,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
+    --rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
+    --rule description="to internal Node Exporter from Prometheus",direction=egress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
+    --rule description="to internal Nginx Log Exporter from Prometheus",direction=egress,port=4040,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для Prometheus не создана."; exit 1; fi 
+else
+    echo "## Группа безопасности для Prometheus уже существует."
+    yc vpc security-group get sg-prometheus
+fi
+
+#
+#Подключаем группу безопасности для Prometheus к сетевому интерфейсу ВМ
+#
+echo -e "# Подключаем группу безопасности для Prometheus #\n # к сетевому интерфейсу ВМ #\n"
+SG_PROMETHEUS_ID=$(yc vpc security-group get --name sg-prometheus |grep -e "^id: " |awk '{print $ 2}')
+#yc compute instance update-network-interface --name $MONS_VM1_NAME --network-interface-index 0 --security-group-name sg-prometheus
+yc compute instance update-network-interface --name $MONS_VM1_NAME --network-interface-index 0 --security-group-id $SG_PROMETHEUS_ID >/dev/null
+if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности сетевому интерфейсу ВМ $MONS_VM1_NAME не назначена."; exit 1; fi
 
 
 #
-#Группа безопасности (security-group) для Grafana (Bastion)
+#Группа безопасности sg-grafana для Grafana (+ Bastion Host)
 #
+echo -e "# Группа безопасности sg-grafana для Grafana #\n"
+yc vpc security-group get sg-grafana &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Группа безопасности для Grafana. Создаём..."
+    yc vpc security-group create --name sg-grafana --description "SG для Grafana" --network-id $NETWORK_ID \
+    --rule description="in Grafana GUI",direction=ingress,port=3000,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
+    --rule description="in Grafana SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
+    --rule description="to internal Prometheus from Grafana",direction=egress,port=9090,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
+    --rule description="to internal VM SSH from Grafana",direction=egress,port=22,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для Grafana не создана."; exit 1; fi 
+else
+    echo "## Группа безопасности для Grafana уже существует."
+    yc vpc security-group get sg-grafana
+fi
+#
+#Подключаем группу безопасности для Grafana к сетевому интерфейсу ВМ
+#
+echo -e "# Подключаем группу безопасности для Grafana #\n # к сетевому интерфейсу ВМ #\n"
+SG_GRAFANA_ID=$(yc vpc security-group get --name sg-grafana |grep -e "^id: " |awk '{print $ 2}')
+#yc compute instance update-network-interface --name $MONS_VM2_NAME --network-interface-index 0 --security-group-name sg-grafana
+yc compute instance update-network-interface --name $MONS_VM2_NAME --network-interface-index 0 --security-group-id $SG_GRAFANA_ID >/dev/null
+if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности сетевому интерфейсу ВМ $MONS_VM2_NAME не назначена."; exit 1; fi
 
 
 #
-#Группа безопасности (security-group) для Elasticsearch
+#Группа безопасности sg-elastic для Elasticsearch
 #
+echo -e "# Группа безопасности sg-elastic для Elasticsearch #\n"
+yc vpc security-group get sg-elastic &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Группа безопасности для Elasticsearch. Создаём..."
+    yc vpc security-group create --name sg-elastic --description "SG для Elasticsearch" --network-id $NETWORK_ID \
+    --rule description="from internal to Elasticsearc",direction=ingress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
+    --rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
+    --rule description="to internal Kibana from Elasticsearch",direction=egress,port=5601,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для Elasticsearch не создана."; exit 1; fi 
+else
+    echo "## Группа безопасности для Elasticsearch уже существует."
+    yc vpc security-group get sg-elastic
+fi
+#
+#Подключаем группу безопасности для Elasticsearch к сетевому интерфейсу ВМ
+#
+echo -e "# Подключаем группу безопасности для Elasticsearch #\n # к сетевому интерфейсу ВМ #\n"
+SG_ELASTIC_ID=$(yc vpc security-group get --name sg-elastic |grep -e "^id: " |awk '{print $ 2}')
+#yc compute instance update-network-interface --name $LOGS_VM1_NAME --network-interface-index 0 --security-group-name sg-elastic
+yc compute instance update-network-interface --name $LOGS_VM1_NAME --network-interface-index 0 --security-group-id $SG_ELASTIC_ID >/dev/null
+if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности сетевому интерфейсу ВМ $LOGS_VM1_NAME не назначена."; exit 1; fi
 
 
 #
-#Группа безопасности (security-group) для Kibana
+#Группа безопасности sg-kibana для Kibana
 #
+echo -e "# Группа безопасности sg-kibana для Kibana #\n"
+yc vpc security-group get sg-kibana &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Группа безопасности для Kibana. Создаём..."
+    yc vpc security-group create --name sg-kibana --description "SG для Kibana" --network-id $NETWORK_ID \
+    --rule description="in Kibana GUI",direction=ingress,port=5601,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
+    --rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
+    --rule description="to internal Elasticsearch from Kibana",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для Kibana не создана."; exit 1; fi 
+else
+    echo "## Группа безопасности для Kibana уже существует."
+    yc vpc security-group get sg-kibana
+fi
+#
+#Подключаем группу безопасности для Kibana к сетевому интерфейсу ВМ
+#
+echo -e "# Подключаем группу безопасности для Kibana #\n # к сетевому интерфейсу ВМ #\n"
+SG_KIBANA_ID=$(yc vpc security-group get --name sg-kibana |grep -e "^id: " |awk '{print $ 2}')
+#yc compute instance update-network-interface --name $LOGS_VM2_NAME --network-interface-index 0 --security-group-name sg-kibana
+yc compute instance update-network-interface --name $LOGS_VM2_NAME --network-interface-index 0 --security-group-id $SG_KIBANA_ID >/dev/null
+if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности сетевому интерфейсу ВМ $LOGS_VM2_NAME не назначена."; exit 1; fi
+
+
+

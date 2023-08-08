@@ -1,0 +1,31 @@
+#
+# Создание снимка диска (snapshot)
+#
+yc compute snapshot --help
+yc compute snapshot create --help
+
+
+yc compute disk list --format yaml
+
+
+#
+# Создание расписания (snapshot-schedule)
+#
+yc compute snapshot-schedule --help
+yc compute snapshot-schedule create --help
+
+yc compute disk list --format yaml
+
+yc compute snapshot-schedule add-disks --help
+
+
+yc compute snapshot-schedule create sched-1 \
+  --description "Ежедневные снимки. Срок харанения 7 дней" \
+  --expression "20 1 ? * *" \  # Время создания снимков в 04:20 (UTC+0) каждый день
+  --start-at "1h"  \ # Начало раписания за 1 час от создания расписания
+  --retention-period 168h # Длительность хранения снимков 7 дней (168 часов)
+
+
+yc compute snapshot-schedule create project-snapshot-schedule --description "Ежедневные снимки. Срок харанения 7 дней" --expression "20 1 ? * *" --start-at "1h" --retention-period 168h
+
+yc compute snapshot-schedule add-disks --name project-snapshot-schedule --disk-id fhm812jsr6jg4jtfg9bp,epdfdi3mfmf628uidduv

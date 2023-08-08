@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+
+
+
+#
+#Расписание создания снимков дисков (snapshot-schedule)
+#
+echo -e "# Расписание создания снимков дисков (snapshot-schedule) #\n"
+yc compute snapshot-schedule get project-snapshot-schedule &>/dev/null
+if [ $? -ne 0 ]; then
+    echo "## Расписание создания снимков дисков не найдена. Создаём..."
+    yc compute snapshot-schedule create project-snapshot-schedule --description "Ежедневные снимки. Срок хранения снимков 7 дней" --expression "10 0 ? * *" --start-at "1h" --retention-period 168h
+    if [ $? -ne 0 ]; then echo "## ОШИБКА. Расписание создания снимков дисков не создано."; exit 1; fi 
+else
+    echo "## Расписание создания снимков дисков уже существует."
+    yc compute snapshot-schedule get project-snapshot-schedule
+fi
+
+#
+#Добавляем все диски из каталога в созданное расписание (snapshot-schedule)
+#
+echo -e "# Добавляем диски в созданное расписание #\n"
+DISK_ID_LIST=$(yc compute disk list |awk 'NR > 3' |cut -d ' ' -f 2 |head -n -2 |paste -sd ',')
+yc compute snapshot-schedule add-disks --name project-snapshot-schedule --disk-id $DISK_ID_LIST
+if [ $? -ne 0 ]; then echo "## ОШИБКА. Диски в расписание не добавлены."; exit 1; fi
+
+

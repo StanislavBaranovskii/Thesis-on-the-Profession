@@ -45,8 +45,3 @@ processors:
 # ============================= X-Pack Monitoring ==============================
 monitoring.enabled: true
 
-# =============================== HTTP Endpoint ================================
-http.enabled: true
-http.host: localhost
-http.port: 5066
-

@@ -17,7 +17,7 @@ ZONE=ru-central1-a
 IP_INT_WEB1=10.128.0.11
 IP_INT_WEB2=10.129.0.11
 
-
+CPU_CORE=1
 MEMORY_SIZE=1GB
 DISK_SIZE=3 #GB
 
@@ -28,8 +28,8 @@ do
     yc compute instance get $VM_NAME &>/dev/null
     if [ $? -ne 0 ]; then
         echo "ВМ $VM_NAME не найдена. Создаём"
-        #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores 2  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
-        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4,address=$VM_INT_IP  --memory $MEMORY_SIZE  --cores 2  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
+        #yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4  --memory 2GB  --cores $CPU_CORE  --core-fraction 20  --hostname centos-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=10,type=network-hdd,image-family=centos-7   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
+        yc compute instance create   --name $VM_NAME   --zone $ZONE   --network-interface subnet-name=default-$ZONE,nat-ip-version=ipv4,address=$VM_INT_IP  --memory $MEMORY_SIZE  --cores $CPU_CORE  --core-fraction 20  --hostname debian-$VM_NAME  --preemptible   --create-boot-disk image-folder-id=standard-images,size=$DISK_SIZE,type=network-hdd,image-family=debian-11   --ssh-key ~/.ssh/id_ed25519.pub   --async >/dev/null
         if [ $? -ne 0 ]; then echo "ОШИБКА. ВМ $VM_NAME не создана"; exit 1; fi 
     else
         echo "ВМ $VM_NAME уже существует"
@@ -114,10 +114,8 @@ scrape_configs:
 cd ~/Thesis-on-the-Profession/ansible
 #ansible-playbook web.yaml --extra-vars="name_web1=$WEB_VM1_NAME ip_int_web1=$IP_INT_WEB1 name_web2=$WEB_VM2_NAME ip_int_web2=$IP_INT_WEB2"
 ansible-playbook web.yaml
-if [ $? -ne 0 ]; then echo "ОШИБКА. Ansible playbook ошибка выполнения сценария"; exit 1; fi
+if [ $? -ne 0 ]; then echo "ОШИБКА в $0. Ansible playbook ошибка выполнения сценария"; exit 1; fi
 
-#####################################################
-# L7-балансировщик (Application Load Balancer)
-#####################################################
+
 
 

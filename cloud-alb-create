@@ -108,28 +108,5 @@ else
     yc alb load-balancer get project-alb
 fi
 
-#
-#Отвязываем публичный IP от ВМ из целевой группы
-#
-echo -e "\n# Отвязываем публичный IP адрес от ВМ из целевой группы #\n"
-for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
-do
-    yc compute instance get $VM_NAME &>/dev/null
-    if [ $? -eq 0 ]; then
-        echo "## ВМ $VM_NAME найдена.."
-        yc compute instance remove-one-to-one-nat --name=$VM_NAME --network-interface-index=0 --async
-        if [ $? -ne 0 ]; then echo "## ОШИБКА. Публичный IP адрес от ВМ $VM_NAME не отвязан"; exit 1; fi 
-    fi
-done
-# Ожидаем освобождения публичных IP адресов
-echo "## Ожидаем освобождения публичных IP адресов..."
-for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
-do
-    while [ -n "$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)" ]
-    do
-        sleep 2
-    done
-    echo "## ВМ $VM_NAME - публичных IP адрес освобожден"
-done
 
 
