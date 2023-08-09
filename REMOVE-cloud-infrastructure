@@ -1,15 +1,23 @@
 #!/bin/bash
 #
 
+#Скрипт удаления всех ресурсов Yandex Cloud в текущем каталоге
+
 
 echo -e "\n ### ВНИМАНИЕ ! ###\n"
-echo -e " ### Планируется удаление ВСЕХ ресурсов в каталоге $(yc config get folder-name) ! \n"
+echo -e " ### Планируется удаление ВСЕХ ресурсов в текущем каталоге !\n"
+CLOUD_NAME=$(yc resource-manager cloud get --id $(yc config get cloud-id) |grep -E "^name: "  |awk '{print $ 2}')
+echo -e "Каталог : $(yc config get folder-name)"
+echo -e "Облако : $CLOUD_NAME \n"
 
-echo "Продолжить ?"
+read -p 'Для начала процесса удаления введите yes : ' CHOICE
+if [ "$CHOICE" != "yes" ]; then echo "Удаление не выбрано"; exit 1; fi
 
+#
+# Удаляем
+#
 
-
-
+echo -e "\nПроцесс удаление инициирован\n"
 
 #L7 load balancer
 #yc alb load-balancer list
@@ -113,4 +121,15 @@ do
 done
 yc compute snapshot list
 
+##Folder (VPC)
+#echo "Folder (VPC)..."
+#yc resource-manager folder delete --name $(yc config get folder-name) --async &>/dev/null
+#yc vpc network get $NETWORK_NAME &>/dev/null
+#if [ $? -ne 0 ]; then
+#    echo "ОШИБКА! Каталог $(yc config get folder-name) не помечен на удаление."
+#    echo "Рекомендуется выполнить удаление каталога из консоли управления."
+#else
+#    echo "Каталог $(yc config get folder-name) помечен на удаление - PENDING_DELETION."
+#    echo "Удаление каталога можно отменить в консоли управления или удалить сразу."
+#fi
 

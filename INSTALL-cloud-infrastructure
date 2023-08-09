@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 
+#Скрипт разворачивания облачной инфраструктуры в Yandex Cloud
+
 ########################################################################
 #Создание виртуального частного облака (Virtual Private Cloud):
 # - Создание каталога (Folder)
@@ -26,12 +28,12 @@ echo "########################################################################
 #Проверяем наличие облака
 yc resource-manager cloud list &>/dev/null
 if [ $? -ne 0 ]; then
-    echo "Облако не найдено или нет интерйфейса командной строки Yandex Cloud"
+    echo "Не найдено ни одного облака или нет интерйфейса командной строки Yandex Cloud"
     exit 1
 else
-    echo "Облако найдено"
+    echo "Найдено как минимум одно облако"
 fi
-
+echo -e "\nТекущее облако : $(yc resource-manager cloud get --id $(yc config get cloud-id) |grep -E "^name: "  |awk '{print $ 2}')\n"
 #Проверяем / создаем каталог проекта (VPC)
 
 #yc resource-manager folder list |grep "$FOLDER_NAME"
