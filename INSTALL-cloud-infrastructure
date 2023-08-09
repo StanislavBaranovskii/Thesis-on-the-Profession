@@ -169,7 +169,7 @@ if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0.
 
 #Создаём L7-балансировщик
 echo -e "\n # Создаём L7-балансировщик \n"
-#~/Thesis-on-the-Profession/cloud-alb-create
+~/Thesis-on-the-Profession/cloud-alb-create
 if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 
@@ -193,12 +193,12 @@ yc vpc subnet list
 echo " # Список созданных ВМ :"
 yc compute instance list
 
-PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -e "              address: " |awk '{print $ 2}')
+PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -iE "^[ ]{14}address: " |awk '{print $ 2}')
 echo -e " #\n # Публичный IP адрес балансера alb : $PUB_IP_ALB \n #\n"
 
-echo "Список созданных групп безопасности:"
+echo "Список созданных групп безопасности :"
 yc vpc security-group get
 
-echo "Список расписаний создания снимков дисков:"
+echo "Список расписаний создания снимков дисков :"
 yc compute snapshot-schedule list
 

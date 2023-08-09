@@ -121,6 +121,24 @@ do
 done
 yc compute snapshot list
 
+#Subnet
+echo "Subnet..."
+for NAME in $(yc vpc subnet list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove subnet: $NAME"
+  yc vpc subnet delete $NAME
+done
+yc vpc subnet list
+
+#Network
+echo "Network..."
+for NAME in $(yc vpc network list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove network: $NAME"
+  yc vpc network delete $NAME
+done
+yc vpc network list
+
 ##Folder (VPC)
 #echo "Folder (VPC)..."
 #yc resource-manager folder delete --name $(yc config get folder-name) --async &>/dev/null

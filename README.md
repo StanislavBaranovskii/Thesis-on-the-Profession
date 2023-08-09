@@ -172,10 +172,12 @@ curl -XGET '<Внутренний_или_внешний_IP>:9100/metrics'
 curl -XGET '<Внутренний_или_внешний_IP>:4040/metrics'
 curl -XGET 'localhost:5066/stats'
 
+curl -XGET '<Публичный_IP_адрес_балансера>:80'; done
+curl -XGET '<Публичный_IP_адрес_балансера>:80/fakepath'; done
 
 ```bash
 for ((i = 1; i <= 10; i++)); do curl -XGET '130.193.37.98:80'; done
-for ((i = 1; i <= 10; i++)); do curl -XGET '130.193.37.98:80/testtest'; done
+for ((i = 1; i <= 10; i++)); do curl -XGET '130.193.37.98:80/fakepath'; done
 ```
 
 ```bash
@@ -216,6 +218,12 @@ sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "select url fro
 
 [Настройка grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
 [Конфигурация grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources)
+
+```bash
+#Нагружаем 2 ядра процессора и память на 60 секунд
+stress -c 2 -m 2 -t 60
+
+```
 
 ---
 
