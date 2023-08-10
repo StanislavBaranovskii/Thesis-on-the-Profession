@@ -249,6 +249,8 @@ yc alb load-balancer create project-alb --description ALB --network-name default
 #Добавляем обработчик в балансировщик (listener)
 yc alb load-balancer add-listener --name project-alb --listener-name alb-listener --external-ipv4-endpoint port=80 --http-router-name project-http-router
 ```
+С содержимом файлов bash скрипта **[cloud-web-install](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-web-install)**, **[cloud-alb-create](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-alb-create)** и файла YAML сценария **[web.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/web.yaml)** можно ознакомится подробно.
+
 ---
 
 ### Мониторинг
@@ -302,11 +304,13 @@ sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "update data_so
 sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "select url from data_source where name='Prometheus'"
 ``` 
 
-Графический интерфейс (GUI) Gafana доступен по адресу: http://<Внешний-IP-ВМ-Grafana>:3000/ . Внешний (публичный) IP адрес ВМ Elasticsearch будет рапечатан в терминале в конце выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
+Графический интерфейс (GUI) Gafana доступен по адресу: http://<Внешний-IP-ВМ-Grafana>:3000/ . Внешний (публичный) IP адрес ВМ Gafana будет рапечатан в терминале в конце выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
 Авторизация: `admin` / `Grafana123`.
 Пароль для встроенной учетной записи admin меняется при первой авторизации в Grafana и хранится в виде хеша в файле базы данных Grafana `grafana.db` (таблица user). Пароль так же можно изменить в командной строке grafana cli `sudo grafana cli admin reset-admin-password 12345`, но только после первой авторизации в GUI. Попытка поменять пароль учетной записи в терминале сразу после первого запуска службы grafana-server приведёт к ошибке.
 После прохождения этапа авторизации для открытия предварительно настроенной панели (dashboard) `My Node Exporter` отображения метрик необходимо в GUI пройти по следующим пунктам меню:
 "Toggle Menu" (пиктограмма в виде трёх горизонтальных черточек) --> "Dashboards" --> "General" --> "My Node Exporter"
+
+Так же на ВМ Gafana реализована концепция Bastion Host: `ssh <Внешний-IP-ВМ-Grafana>:23` . Внешний (публичный) IP адрес ВМ Gafana будет рапечатан в терминале в конце выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
 
 При установке и конфигурировании Grafana руководствовался следующими официальными источниками:
 - [Порядок установки grafana, edition:oss, version:9.5.6](https://grafana.com/grafana/download/9.5.6?edition=oss)
@@ -332,6 +336,8 @@ cd ~/Thesis-on-the-Profession/ansible
 ansible-playbook monitoring.yaml --extra-vars="ip_prom=10.128.0.21"
 
 ```
+С содержимом файла bash скрипта **[cloud-monitoring-install](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-monitoring-install)** и файла YAML сценария **[monitoring.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/monitoring.yaml)** можно ознакомится подробно.
+
 ---
 
 ### Логи
@@ -404,6 +410,8 @@ Virtual Private Cloud (VPC) - представляет собой отдельн
 > - интерфейс командной строки Yandex Cloud уже установлен и
 > - в личном аккаунте сервиса Yandex Cloud уже существует хотя бы одно облако (cloud).
 
+Разворичивание VPC в начале выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
+
 В текущем облаке создаем новый отдельный каталог `thesis-on-the-profession`. В конфигурации командной строки YC CLI устанавливаем созданный каталог `thesis-on-the-profession` по умолчанию. В новом текущем каталоге создаём сеть `default` и в ней две подсети: `default-ru-central1-a` и `default-ru-central1-b`. Имя подсети состоит из префикса - имя сети (network) и суфикса - имя зоны доступности (zone). Размер подсети (range) выбираем с учётом планируемого колличества работающих в данной подсети ВМ (плюс шлюз и плюс DNS). Диапазоны различных подсетей в границах одной сети не должны пересекаться [cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/vpc/concepts/network). Имена сети, подсетей и значения размеров подсетей оставил в значениях, используемх по умолчанию.
 Далее всю облачную инфраструктуру разворачиваем в отдельном каталоге (стартовый bash скрипт `INSTALL-cloud-infrastructure`). По окончании работ удалаем созданную инфраструктуру вместе с каталогом `thesis-on-the-profession` (VPC), не затрагивая другую существующую в облаке инфраструктуру (bash скрипт `REMOVE-cloud-infrastructure`).
 
@@ -425,10 +433,14 @@ yc vpc subnet create --name default-ru-central1-a --description "Подсеть 
 yc vpc subnet create --name default-ru-central1-b --description "Подсеть зоны B" --zone ru-central1-b --network-name default --range 10.129.0.0/24
 ```
 
+С содержимом файлов bash скрипта **[INSTALL-cloud-infrastructure](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/INSTALL-cloud-infrastructure)** и **[REMOVE-cloud-infrastructure](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/REMOVE-cloud-infrastructure)** можно ознакомится подробно.
+
 **Создание групп безопасности (Security Groups) и реализация концепции Bastion Host**
 
 Группы безопасности действуют по принципу «запрещено все, что не разрешено». Если назначить сетевому интерфейсу ВМ группу безопасности без правил, ВМ не сможет передавать и принимать трафик ([cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/vpc/concepts/security-groups)).
 Если в группе безопасности существует только правило для исходящего трафика, но нет правил для входящего трафика, ответный трафик все равно сможет поступать на ВМ. Если в группе безопасности есть только правила для входящего трафика, ВМ сможет только отвечать на запросы, но не инициировать их ([cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/vpc/concepts/security-groups)).
+
+Группы безопасности создаются при вызовом в главном скрипте bash скрипта `cloud-alb-create`.
 
 Создаём следующие группы безопасности (Security Groups)
 1. Группа безопасности `sg-web` для двух ВМ с web серверами - сайт:
@@ -535,6 +547,8 @@ SG_KIBANA_ID=$(yc vpc security-group get --name sg-kibana |grep -e "^id: " |awk 
 yc compute instance update-network-interface --name $LOGS_VM2_NAME --network-interface-index 0 --security-group-id $SG_KIBANA_ID
 ```
 
+С содержимом файла bash скрипта **[cloud-alb-create](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-alb-create)** можно ознакомится подробно.
+
 ---
 
 ### Резервное копирование
@@ -557,6 +571,8 @@ yc compute snapshot-schedule add-disks \
 --name project-snapshot-schedule \
 --disk-id $(yc compute disk list |awk 'NR > 3' |cut -d ' ' -f 2 |head -n -2 |paste -sd ',')
 ```
+
+С содержимом файла bash скрипта **[cloud-snapshot-shed-create](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-snapshot-shed-create)** можно ознакомится подробно.
 
 Перед созданием снимка диска ВМ необходимо, на время создания снимка, остановить ВМ.
 Или для Linux подобных ОС для не системных дисков:
