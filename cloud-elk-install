@@ -22,7 +22,7 @@ INT_IP_KIBANA=10.128.0.32 #Kibana
 
 CPU_CORE=2
 MEMORY_SIZE=4GB
-DISK_SIZE=10 #GB
+DISK_SIZE=8 #GB
 
 echo [logs] > ~/Thesis-on-the-Profession/ansible/hosts
 

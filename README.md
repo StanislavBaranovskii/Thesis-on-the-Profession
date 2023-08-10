@@ -99,13 +99,13 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 - Ansible 2.15.1
 - Python 3.10.6
 - Yandex Cloud CLI 0.108.1 (как альтернатива заблокированному продукту Terraform)
-- *Terraform 1.5.3*
+- *Terraform 1.5.5*
 - sqlite3 3.37.2 (для редактирования файла базы данных Grafana `grafana.db`)
 - DB Browser for SQLite 3.12.1 (для удобства наглядного изучения структуры базы данных Grafana `grafana.db`)
 - stress 1.0.5 (для тестовой нагрузки центрального процессора, подсистемы памяти и дисковой подсистемы ВМ с целью тестирования подсистемы сбора метрик)
 
 Проблема в использовании Terraform связана проблема в настройке провайдера - при выполнении сценариев идёт проверка провайдера с обращением на заблокированные на территории РФ интернет ресурсы `terraform.io` и `hashicorp.com`.
-Написание файлов-скриптов на bash, с применением Yandex Cloud CLI, для разворачивания облачной инфраструктуры в качестве альтернативы заблокированного на территории РФ продукта Terraform не противоречит основной идеи модели Инфраструктура-как-Код (Infrastructure as Code, IaC). 
+Написание файлов-скриптов на bash, с применением Yandex Cloud CLI, для разворачивания облачной инфраструктуры в качестве альтернативы заблокированноых ресурсов Terraform не противоречит основной идеи модели Инфраструктура-как-Код (Infrastructure as Code, IaC). 
 
 **Структура и описание назначения файлов и каталогов проекта**
 
@@ -113,7 +113,8 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 
 В корне каталога проекта располагаются файлы bash скриптов создания, конфигурирования и удаления инфраструктуры в облаке.
 
-`INSTALL-cloud-infrastructure` - основной, стартовый файл скрипта создания облачной инфраструктуру. Инфраструктура проекта поднимается в отдельном новом каталоге (VPC) текущего облака и не затрагивает другую существующую инфраструктуру. Облако задаётся в конфигурировании YC CLI (`yc config --help`). Для разворачивания рабочей инфраструктуры проекта достаточно запустить и дождаться завершения выполнения данного скрипта.
+`INSTALL-cloud-infrastructure` - основной, стартовый файл скрипта создания облачной инфраструктуру. Инфраструктура проекта поднимается в отдельном новом каталоге (VPC) текущего облака и не затрагивает другую существующую инфраструктуру. Облако задаётся в конфигурировании YC CLI (`yc config --help`). Для разворачивания рабочей инфраструктуры проекта достаточно запустить и дождаться завершения выполнения данного скрипта. Вслучае успешного окончания развёртывания инфраструктуры в конце своей работы скрипт распечатает в терминале список созданных облачных ресурсов и способы доступа к ним.
+Необходимым условием запуска скриптов является наличие установленного интерфейса командной строки Yandex Cloud и наличие хотя бы одно облака (cloud) в личном аккаунте сервиса Yandex Cloud.
 
 `REMOVE-cloud-infrastructure` - файл bash скрипта удаления инфраструктуры в текущем каталоге/облаке и освобождения тарифицируемых ресурсов. Облако и каталог задаются в конфигурировании YC CLI (`yc config --help`).
 
@@ -121,7 +122,12 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 
 2. Каталог `ansible`.
 
-Каталог `ansible` содержит файлы YAML сценарии (playbook) создания сервисов на ВМ и файл инвентаризации (inventary) host. Файл host заполняется автоматически при выполнении bash скриптов и по мере создания ВМ в облаке. Файлы сценарии YAML запускаются на выполнение в bash скриптах разворачивания соотвествующих целевых ВМ и после создания последних.
+Каталог `ansible` содержит:
+- конфигурационный файл `ansible.cfg`;
+- файлы YAML сценарии (playbook) создания сервисов на ВМ;
+- файл инвентаризации (inventary) `hosts`.
+
+Файлы сценарии YAML запускаются на выполнение в bash скриптах создания соотвествующих целевых ВМ и после создания последних. Файл hosts заполняется автоматически при выполнении bash скриптов и по мере создания ВМ в облаке.
 
 3. Каталог `logs`
 
@@ -129,7 +135,7 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 
 4. Каталог `monitoring`
 
-Каталог `monitoring` содержит подготовленные конфигурационные файлы Prometheus (в одноименном дочернем каталоге), Kibana (в одноименном дочернем каталоге), Node Exporter и Prometheus Nginxlog Exporter и файлы bash скриптов установки Prometheus и Node Exporter. Конфигурационные файлы копироуются на целевые ВМ после разворачивания самих ВМ и в процессе разворачивания соответствующих сервисов на ВМ.
+Каталог `monitoring` содержит подготовленные конфигурационные файлы Prometheus (в одноименном дочернем каталоге), Kibana (в одноименном дочернем каталоге), Node Exporter и Prometheus Nginxlog Exporter и файлы bash скриптов установки Prometheus и Node Exporter в ручной режиме. Конфигурационные файлы копироуются на целевые ВМ после разворачивания самих ВМ и в процессе разворачивания соответствующих сервисов на ВМ.
 
 5. Каталог `notes`
 
@@ -139,7 +145,11 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 
 7. Каталог `web`
 
-Каталог `web` содержит подготовленные конфигурационные файлы Nginx (в одноименном дочернем каталоге) и изменённый файл HTML в дочернем каталоге WWW - тестовая страница сайта. Конфигурационные файлы и HTML файл копироуются на целевые ВМ после разворачивания самих ВМ и в процессе разворачивания web сервиса на ВМ.
+Каталог `web` содержит:
+- подготовленные конфигурационные файлы Nginx (в одноименном дочернем каталоге) - `default` и `nginx.conf`;
+- изменённый файл HTML в дочернем каталоге WWW - тестовая страница сайта.
+
+Конфигурационные файлы и HTML файл копироуются на целевые ВМ после разворачивания самих ВМ и в процессе разворачивания web сервиса на ВМ.
 
 ---
 
@@ -148,10 +158,10 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 **Требования к ресурсам ВМ (процессор - оперативная память - дисковая подсистема)**
 
 Учитывая, что на ВМ из web группы под управлением ОС Debian будут работать только следующие сервисы:
-- сервер Nginx с опубликованной одно статической страницей сайта;
-- клиент сбора логов Filebeat;
+- сервер Nginx с опубликованной одно статической страницей сайта и с количеством одновременно обслуживаемых клиентов не более 10 шт.;
+- клиент сбора логов Filebeat (целевые лог файлы access.log и error.log);
 - клиент сбора метрик Node Exporter;
-- клиент сбора метрик Prometheus Nginxlog Exporter.
+- клиент сбора метрик Prometheus Nginxlog Exporter (целевые лог файлы access.log и error.log).
 Требования к аппаратным ресурсам машины минимальны. [Рекомендуемые минимальные аппаратные требования для Debian](https://www.debian.org/releases/bullseye/amd64/ch03s04.ru.html)
 
 Останавливаемся на минимально возможной для выбора на платформе Yandex Cloud аппаратной конфигурации ВМ:
@@ -159,48 +169,132 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 - подсистема оперативной памяти - 1 ГБ;
 - дисковая подсистема - 3 ГБ.
 
+**Порядок развертывания, проверка доступности и работоспособности сервиса**
 
+Развертывание сервисов инициируется запуском на выполнение главного bash скрипта `INSTALL-cloud-infrastructure`.
+Сами web сервера поднимаются вызовом в главном скрипте bash скрипта `cloud-web-install`.
+L7 балансировщик создается вызовом bash скрипта `cloud-alb-create`.
 
+В соответствии со сценарием развёртывания инфрастуктуры ВМ web сайта создаются после создания ВМ с Elasticsearch. Вслучае динамически назначаемых внутренних адресов ВМ новый IP адрес ВМ с Elasticsearch необходимо прописать в конфигурационный файл `filebeat.yml` (секция output.elasticsearch параметр hosts) клиента Filebeats. Процедура создание L7 балансировщика инициализируется только после подъёма всей web серверов из целевой группы.
 
-*Что касается объема памяти, то практически невозможно дать какие-то общие рекомендации, все слишком индивидуально для каждой системы и поставленных задач. Как показала практика, в среднем для сервера баз данных должно хватить 256 мегабайт на нужды операционной системы, примерно по 64 мегабайта на каждого активно работающего с базой пользователя плюс не менее половины от объема самой базы данных.*
+Установка и запуск на ВМ клиентов сбора и передачи метрик/логов выполняется после запуска web сервера.
 
-Для работы web-сервера...
-Nginx плюс, по условию задания, клиенты мониторинга Node Exporter, Nginx Log Exporter, плюс клиент сбора логов Filebeat
+Проверку корректности работы клиентов передачи метрик/логов можно выполнить соответствующими запросами в терминале:
+- `curl -XGET '<Локальный_или_публичный_IP_адрес>:9100/metrics'` - для Node Exporter;
+- `curl -XGET '<Локальный_или_публичный_IP_адрес>:4040/metrics'` - для Prometheus Nginxlog Exporter;
+- `curl -XGET 'localhost:5066/stats'` - для Filebeat (зону доступность статистики можно расширить указав в конфигурационном файле `filebeat.yml` в параметре `http.host` локальный или публичный IP адрес ВМ с клиентом Filebeat)
 
-Проверка корректности работы клиентов передачи метрик/логов:
-curl -XGET '<Внутренний_или_внешний_IP>:9100/metrics'
-curl -XGET '<Внутренний_или_внешний_IP>:4040/metrics'
-curl -XGET 'localhost:5066/stats'
+Проверку корректности работы L7 балансировщика и web серверов (и заодно заполнить логи nginx серверов) можно выполнить соответствующими запросами в терминале:
+- `curl -XGET '<Публичный_IP_адрес_балансировщика>:80'` - запрос существующей web страницы;
+- `curl -XGET '<Публичный_IP_адрес_алансировщика>:80/fakepath` - запрос не существующей web страницы.
 
-curl -XGET '<Публичный_IP_адрес_балансера>:80'; done
-curl -XGET '<Публичный_IP_адрес_балансера>:80/fakepath'; done
-
+Пример нагрузки ВМ группы web серверов (через публичный IP адрес L7 балансировщика):
 ```bash
 for ((i = 1; i <= 10; i++)); do curl -XGET '130.193.37.98:80'; done
 for ((i = 1; i <= 10; i++)); do curl -XGET '130.193.37.98:80/fakepath'; done
 ```
 
+**Листинг команд с использованием YC CLI:**
 ```bash
+###########################
+#Создаем два идентичных web сервера
+###########################
 
+#Создаём ВМ vm_web1
+yc compute instance create --name vm-web1 --zone ru-central1-a --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4,address=10.128.0.11 --memory 1GB  --cores 2  --core-fraction 20 --hostname debian-vm-web1 --preemptible --create-boot-disk image-folder-id=standard-images,size=3,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+
+#Создаём ВМ vm_web2
+yc compute instance create --name vm-web1 --zone ru-central1-b --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4,address=10.129.0.11 --memory 1GB  --cores 2  --core-fraction 20 --hostname debian-vm-web1 --preemptible --create-boot-disk image-folder-id=standard-images,size=3,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+
+#Запускаем плейбук развертывания web серверов
+cd ~/Thesis-on-the-Profession/ansible
+ansible-playbook web.yaml
+
+###########################
+#Создаём L7 балансировщик для двух web серверов
+###########################
+
+#Создаём целевую группу (TG)
+yc alb target-group create project-web-target-group --description="ALB:Целевая группа" \
+--target subnet-name=default-ru-central1-a,ip-address=10.128.0.11 \
+--target subnet-name=default-ru-central1-b,ip-address=10.129.0.11
+
+#Создаём группу бэкендов (BG)
+yc alb backend-group create project-web-backend-group --description="ALB:Группа бэкендов"
+
+#Добавляем бэкенд в группу бэкендов (B)
+#(только указываем ID целевой группы, по имени группы не не добавляет)
+yc alb backend-group add-http-backend --backend-group-name project-web-backend-group --name project-backend --weight 1 --port 80 \
+--target-group-id=$(yc alb target-group get project-web-target-group |grep -e "^id: " |awk '{print $ 2}') \
+--panic-threshold 90 \
+--http-healthcheck port=80,healthy-threshold=10,unhealthy-threshold=15,timeout=10s,interval=2s,path=/
+
+#Создаём HTTP-роутер (router)
+yc alb http-router create project-http-router --description "ALB:HTTP роутер"
+
+#Создаём виртуальный хост (VH)
+yc alb virtual-host create project-vhost --http-router-name project-http-router
+
+#Создаём маршрут (route)
+yc alb virtual-host append-http-route project-route \
+--http-router-name project-http-router \
+--virtual-host-name project-vhost --prefix-path-match / \
+--backend-group-name project-web-backend-group
+
+#Создаём L7 балансировщик (ALB)
+yc alb load-balancer create project-alb --description ALB --network-name default \
+--location subnet-name=default-ru-central1-a,zone=ru-central1-a  \
+--location subnet-name=default-ru-central1-b,zone=ru-central1-b
+
+#Добавляем обработчик в балансировщик (listener)
+yc alb load-balancer add-listener --name project-alb --listener-name alb-listener --external-ipv4-endpoint port=80 --http-router-name project-http-router
 ```
-
 ---
 
 ### Мониторинг
 
-Требования к ресурсам ВМ (процессор - оперативная память - дисковая подсистема).
+**Требования к ресурсам ВМ (процессор - оперативная память - дисковая подсистема)**
 
-Выбор версий Prometheus и Grafana
+Для продукта Prometheus в официальных источниках не увидел минимальных или рекумендуемых требований к аппаратным ресурсам.
+Ожидаемо, что требования к ресурсам напрямую зависят от количества опрашиваемых клиентов сбора метрик и от типа и количества самих собираемых метрик.
 
-Новую на данный момент версию 10.0.х не рискнул использовал. Остановился на последней стабильной версии 9.5.6 (в процессе написания дипломной работы вышла версия 9.5.7). Выбор не новой но проверенной и обкатанной версии продукта гарантирует поддержку интернет-сообщества пользователей данного продукта в решении проблем, связанных с установкой или конфигурированием.
+Для продукта Grafana указаны следующие рекомендации [Hardware recommendations](https://grafana.com/docs/grafana/next/setup-grafana/installation/?src=FB) к оборудованию:
+- минимальный рекомендуемый объем памяти: 512 МБ
+- минимальный рекомендуемый процессор: 1 ядро
 
+Для Grafana Enterprise Metrics (GEM) указаны следующие рекомендации [GEM hardware requirements](https://grafana.com/docs/enterprise-metrics/latest/setup/hardware/) к оборудованию:
+- соотношением процессора (количества ядер) к памяти (в ГБ) 1:4
+- хранилище со скоростью 50 операций ввода-вывода на гигабайт при минимальной 150Gi выделеной для обеспечения эффективного ввода-вывода.
+- скорость сетевого соединения не ниже 10 Гб/сек
 
-При установке и конфигурировании Grafana руководствовался следующими официальными источниками:
-- [Порядок установки grafana, edition:oss, version:9.5.6](https://grafana.com/grafana/download/9.5.6?edition=oss)
-- [Настройка grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
-- [Конфигурация grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources)
+С учетом конфигурации и характеристик создаваемой учебно-тестовой инфраструктуры и, исходя из минимально возможной для выбора на платформе Yandex Cloud аппаратной конфигурации ВМ,
+задаем следующие одинаковые планки для ВМ Prometheus и для ВМ Grafana:
+- центральный процессор - 2 ядра;
+- подсистема оперативной памяти - 2 ГБ;
+- дисковая подсистема - 6 ГБ.
 
-После установки Grafana, останавливаем сервис grafana-server, копируем файл grafana.db на ВМ в /var/lib/grafana/ , запукаем сервис. Файле grafana.db уже содержит хеш  установленного пароля для пользователя admin (таблица user), предварительно настроенные пользовательские панели (таблица dashboard) и отредактированные параметры подключения к серверу pometheus (таблица data_source). Параметры подключения к серверу pometheus (IP адрес и порт) редактирую в файле grafana.db с помощью консольной утилиты sqlite3 в Ansible Playbook сценарии `monitoring.yaml` (bash скрипт cloud-monitoring-install).
+**Выбор версий Prometheus и Grafana**
+
+Prometheus
+
+Использовал версию Prometheus 2.45.0 - последнюю на момент начала работ. В процессе работы над дипломным проектом вышла новая версия 2.46.0.
+
+Grafana
+
+Новую на данный момент версию Grafana 10.0.х не рискнул использовал. Остановился на предпоследней стабильной версии 9.5.6. В процессе работы над дипломным проектом вышла версия 9.5.7. Данный факт проигнорировал, т.к. с выходом новой версии могла измениться уже изученная мной структура файла базы данных grafana.db.
+
+Выбор не новой но проверенной и обкатанной версии продукта гарантирует поддержку интернет-сообщества пользователей данного продукта в решении возможных проблем, связанных с установкой или конфигурированием.
+
+**Порядок развертывания, проверка доступности и работоспособности сервиса**
+
+Развертывание сервисов инициируется запуском на выполнение главного bash скрипта `INSTALL-cloud-infrastructure`.
+Сами ресурсы Prometheus и Grafana поднимаются вызовом в главном скрипте bash скрипта `cloud-monitoring-install`.
+
+В соответствии со сценарием развёртывания инфрастуктуры ВМ Prometheus и Grafana создаются после создания ВМ web группы. Вслучае динамически назначаемых внутренних адресов ВМ новые IP адреса ВМ web группы, необходимо перечислить в конфигурационный файл `prometheus.yml` (scrape_configs -> job_name -> targets) Prometheus.
+Grafana поднимается после разворачивания Prometheus по той же причине. Вслучае динамически назначаемых внутренних адресов ВМ новый IP адрес ВМ Prometheus необходимо указать при первоначальной настроки подключения Grafana к Prometheus или изменить уже сохраненное подключение в файле базы данных `grafana.db` (таблица data_source -> поле url).
+
+После установки Grafana, останавливаем сервис grafana-server, копируем файл `grafana.db` на ВМ в `/var/lib/grafana/`, запукаем сервис. Файл `grafana.db` уже содержит хеш  установленного пароля для пользователя admin (таблица user), предварительно настроенные пользовательские панели (таблица dashboard) и отредактированные параметры подключения к серверу pometheus (таблица data_source). Параметры подключения к серверу pometheus (IP адрес и порт) редактирую в файле grafana.db с помощью консольной утилиты sqlite3 в Ansible Playbook сценарии `monitoring.yaml` (bash скрипт `cloud-monitoring-install`).
+
 Примеры запросов к файлу базы данных Grafana:
 ```bash
 sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "select url from data_source where name='Prometheus'"
@@ -208,43 +302,95 @@ sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "update data_so
 sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "select url from data_source where name='Prometheus'"
 ``` 
 
-Графический интерфейс (GUI) Gafana доступен по адресу: http://<Внешний-IP-ВМ-Grafana>:3000/
-Авторизация: admin / Grafana123
-Пароль для встроенной учетной записи admin меняется при первой авторизации в Grafana и хранится в виде хеша в файле базы данных Grafana `grafana.db` (таблица user). Пароль так же можно изменить в командной строке grafana cli `sudo grafana cli admin reset-admin-password 12345`, но только после первой авторизации в GUI.
+Графический интерфейс (GUI) Gafana доступен по адресу: http://<Внешний-IP-ВМ-Grafana>:3000/ . Внешний (публичный) IP адрес ВМ Elasticsearch будет рапечатан в терминале в конце выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
+Авторизация: `admin` / `Grafana123`.
+Пароль для встроенной учетной записи admin меняется при первой авторизации в Grafana и хранится в виде хеша в файле базы данных Grafana `grafana.db` (таблица user). Пароль так же можно изменить в командной строке grafana cli `sudo grafana cli admin reset-admin-password 12345`, но только после первой авторизации в GUI. Попытка поменять пароль учетной записи в терминале сразу после первого запуска службы grafana-server приведёт к ошибке.
 После прохождения этапа авторизации для открытия предварительно настроенной панели (dashboard) `My Node Exporter` отображения метрик необходимо в GUI пройти по следующим пунктам меню:
 "Toggle Menu" (пиктограмма в виде трёх горизонтальных черточек) --> "Dashboards" --> "General" --> "My Node Exporter"
 
-[Порядок установки grafana, edition:oss, version:9.5.6](https://grafana.com/grafana/download/9.5.6?edition=oss)
+При установке и конфигурировании Grafana руководствовался следующими официальными источниками:
+- [Порядок установки grafana, edition:oss, version:9.5.6](https://grafana.com/grafana/download/9.5.6?edition=oss)
+- [Настройка grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
+- [Конфигурация grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources)
 
-[Настройка grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
-[Конфигурация grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources)
+При установке и конфигурировании Prometheus так же руководствовался офицальныой документацией [Prometheus - Docs](https://prometheus.io/docs/introduction/overview/) .
 
+**Листинг команд с использованием YC CLI:**
 ```bash
-#Нагружаем 2 ядра процессора и память на 60 секунд
-stress -c 2 -m 2 -t 60
+###########################
+#Создаем ВМ Prometheus и ВМ Grafana
+###########################
+
+#Создаём ВМ vm-prometheus
+yc compute instance create --name vm-prometheus --zone ru-central1-a --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4,address=10.128.0.21 --memory 2GB  --cores 2  --core-fraction 20 --hostname debian-vm-prometheus --preemptible --create-boot-disk image-folder-id=standard-images,size=6,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+
+#Создаём ВМ vm-grafana
+yc compute instance create --name vm-grafana --zone ru-central1-a --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4,address=10.128.0.22 --memory 2GB  --cores 2  --core-fraction 20 --hostname debian-vm-grafana --preemptible --create-boot-disk image-folder-id=standard-images,size=6,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+
+#Запускаем плейбук развертывания Prometheus и Grafana
+cd ~/Thesis-on-the-Profession/ansible
+ansible-playbook monitoring.yaml --extra-vars="ip_prom=10.128.0.21"
 
 ```
-
 ---
 
 ### Логи
 
-Требования к ресурсам ВМ (процессор - оперативная память - дисковая подсистема).
+**Требования к ресурсам ВМ (процессор - оперативная память - дисковая подсистема)**
 
-Выбор версий Filebeat, Elasticsearch, Kibana.
+На официальном ресурсе Elastic аппаратные требования указаны только для Elastic Cloud Enterprise (ECE) - [Elastic - Hardware Prerequisites](https://www.elastic.co/guide/en/cloud-enterprise/2.13/ece-hardware-prereq.html).
+
+Требования к ресурсам напрямую зависят от количества подключёных клиентов сбора логов и от вида и количества самих логов.
+
+С учетом конфигурации и характеристик создаваемой учебно-тестовой инфраструктуры и, исходя из минимально возможной для выбора на платформе Yandex Cloud аппаратной конфигурации ВМ,
+задаем следующие одинаковые планки для ВМ Elasticsearch и для ВМ Kibana:
+- центральный процессор - 2 ядра;
+- подсистема оперативной памяти - 4 ГБ;
+- дисковая подсистема - 8 ГБ.
+
+**Выбор версий Elasticsearch, Filebeat, Kibana**
+
+Не смотря на то, что целом поддерживается совместный запуск и работа различных версий Elasticsearch, Filebeat, Kibana, разработчики ПО Elastic рекомендуют использовать продукты одной и той же версии. [Elastic - Supported Platforms](https://www.elastic.co/guide/en/kibana/7.17/setup.html).
 
 Новую на данный момент версию 8.х стека ELK не использовал. Остановился на последней стабильной версии 7.17.11. Выбор не новой но проверенной и обкатанной версии продукта гарантирует поддержку интернет-сообщества пользователей данного продукта в решении проблем, связанных с установкой или конфигурированием.
-Доступ к ресурсам на территории РФ заблокирован...
-Скачал установочные пакеты Filebeat, Elasticsearch и Kibana с официального ресурса с использованием...
-Скачанные установочные пакеты разместил на яндекс.диске и в Ansible Playbook сценариях по прямым ссылкам скачивал и устанавливал продукты на ВМ в облаке. 
 
-Графический интерфейс (GUI) Kibana доступен по адресу: http://<Внешний-IP-ВМ-Kibana>:5601/
-Авторизация: elastic / Elastic123
+Доступ к ресурсам Elastic на территории РФ ограничен.
+Скачал установочные пакеты Filebeat, Elasticsearch и Kibana версии 7.17.11 с официального ресурса с использованием в web браузере прокси-аддона(proxy-addon). 
+Скачанные DEB пакеты разместил на яндекс.диске и в Ansible Playbook сценариях по прямым ссылкам скачивал и устанавливал продукты на ВМ в облаке. 
+
+**Порядок развертывания, проверка доступности и работоспособности сервиса**
+
+Развертывание сервисов инициируется запуском на выполнение главного bash скрипта `INSTALL-cloud-infrastructure`.
+Сами ресурсы Elasticsearch и Kibana поднимаются вызовом в главном скрипте bash скрипта `cloud-elk-install`.
+
+В соответствии со сценарием развёртывания инфрастуктуры ВМ Elasticsearch и Kibana создаются первыми. Вслучае динамически назначаемых внутренних адресов ВМ новый IP адрес ВМ с Elasticsearch необходимо прописать в конфигурационный файл `filebeat.yml` (секция output.elasticsearch параметр hosts) клиентов Filebeats, устанавливаемых на ВМ группы web.
+
+Графический интерфейс (GUI) Kibana доступен по адресу: http://<Внешний-IP-ВМ-Kibana>:5601/ . Внешний (публичный) IP адрес ВМ Kibana будет рапечатан в терминале в конце выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
+Авторизация: `elastic` / `Elastic123`.
 Пароль для втроенных учетных записей Elasticsearch, включая elastic и kibana_system, меняется в Ansible Playbook сценарии `logs.yaml` (bash скрипт `cloud-elk-install`).
 После прохождения этапа авторизации для просмотра логов необходимо в GUI пройти по следующим пунктам меню:
 Пиктограмма в виде трёх горизонтальных черточек --> "Observability" --> "Logs" --> "Stream"
 Для подключения панели отображения логов Nginx необходимо в GUI Kibana выполнить следующее:
 Пиктограмма в виде трёх горизонтальных черточек --> "Analytics" --> "Dashboard" --> в строке поиска набрать и выбрать панель "[Filebeat Nginx] Access and error logs ECS" 
+
+**Листинг команд с использованием YC CLI:**
+```bash
+###########################
+#Создаем ВМ Elasticsearch и ВМ Kibana
+###########################
+
+#Создаём ВМ vm-elastic
+yc compute instance create --name vm-elastic --zone ru-central1-a --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4,address=10.128.0.31 --memory 4GB  --cores 2  --core-fraction 20 --hostname debian-vm-prometheus --preemptible --create-boot-disk image-folder-id=standard-images,size=8,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+
+#Создаём ВМ vm-kibana
+yc compute instance create --name vm-kibana --zone ru-central1-a --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4,address=10.128.0.32 --memory 4GB  --cores 2  --core-fraction 20 --hostname debian-vm-grafana --preemptible --create-boot-disk image-folder-id=standard-images,size=8,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+
+#Запускаем плейбук развертывания Elasticsearch и Kibana
+cd ~/Thesis-on-the-Profession/ansible
+ansible-playbook logs.yaml
+```
+
+С содержимом файла bash скрипта **[cloud-elk-install](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-elk-install)** и файла YAML сценария **[logs.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/logs.yaml)** можно ознакомится подробно.
 
 ---
 
@@ -261,7 +407,7 @@ Virtual Private Cloud (VPC) - представляет собой отдельн
 В текущем облаке создаем новый отдельный каталог `thesis-on-the-profession`. В конфигурации командной строки YC CLI устанавливаем созданный каталог `thesis-on-the-profession` по умолчанию. В новом текущем каталоге создаём сеть `default` и в ней две подсети: `default-ru-central1-a` и `default-ru-central1-b`. Имя подсети состоит из префикса - имя сети (network) и суфикса - имя зоны доступности (zone). Размер подсети (range) выбираем с учётом планируемого колличества работающих в данной подсети ВМ (плюс шлюз и плюс DNS). Диапазоны различных подсетей в границах одной сети не должны пересекаться [cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/vpc/concepts/network). Имена сети, подсетей и значения размеров подсетей оставил в значениях, используемх по умолчанию.
 Далее всю облачную инфраструктуру разворачиваем в отдельном каталоге (стартовый bash скрипт `INSTALL-cloud-infrastructure`). По окончании работ удалаем созданную инфраструктуру вместе с каталогом `thesis-on-the-profession` (VPC), не затрагивая другую существующую в облаке инфраструктуру (bash скрипт `REMOVE-cloud-infrastructure`).
 
-Листинг команд с использованием YC CLI:
+**Листинг команд с использованием YC CLI:**
 ```bash
 # создаём новый каталог thesis-on-the-profession
 yc resource-manager folder create --name thesis-on-the-profession --description "Проект дипломной работы"
@@ -320,7 +466,7 @@ yc vpc subnet create --name default-ru-central1-b --description "Подсеть 
 Для реализации роли Bastion Host (возможность доступа по SSH с одной ВМ на остальные ВМ в VPC) необходимо скопировать используемые для авторизации по SSH пару ключей на ВМ Grafana.
 Копирование публичного ключа выполняется на этапе создания ВМ.  Копирование приватного ключа выполняется в ansible playbook сценарии `monitoring.yaml` (bash скрипт `cloud-monitoring-install`).
 
-Листинг команд с использованием YC CLI:
+**Листинг команд с использованием YC CLI:**
 ```bash
 NETWORK_ID=$(yc vpc network get --name default |grep -e "^id: " |awk '{print $ 2}')
 #
@@ -397,7 +543,7 @@ yc compute instance update-network-interface --name $LOGS_VM2_NAME --network-int
 В созданное раписание `project-snapshot-schedule` добавил все диски всех ВМ из каталога проекта.
 Процесс создания и добавления реализован в bash скрипте `cloud-snapshot-shed-create` (вызывается в основном bash скрипте `INSTALL-cloud-infrastructure`)
 
-Листинг команд с использованием YC CLI:
+**Листинг команд с использованием YC CLI:**
 ```bash
 # создаём расписание project-snapshot-schedule в текущем каталоге
 yc compute snapshot-schedule create project-snapshot-schedule \
