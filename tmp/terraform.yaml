@@ -1,0 +1,52 @@
+---
+- name: Terraform-Host
+  hosts: vm-terraform
+#  become: true
+  gather_facts: false
+  
+  pre_tasks:
+  
+  - name: Wait for target connection to become reachable/usable
+    ansible.builtin.wait_for_connection:
+      delay: 20
+      sleep: 2
+      timeout: 300
+
+  - name: Wait for port 22 to become open on the hosts
+    ansible.builtin.wait_for:
+      port: 22
+      delay: 5
+      connect_timeout: 20
+
+  - name: Gather facts
+    ansible.builtin.setup:
+  
+  tasks:
+  - name: download GO (get_url)
+    ansible.builtin.get_url:
+      url: https://go.dev/dl/go1.20.7.linux-amd64.tar.gz
+      #dest: /tmp/elasticsearch-7.17.11-amd64.deb
+      #checksum: sha256:76ae0c7ce43bd8a5a6f2baf71b69c004f9d1e856e2edc22d42e491efe51d92bd
+      #mode: '0740'
+
+  - name: copy GO (shell)
+    ansible.builtin.shell: rm -rf /usr/local/go && tar -C /usr/local -xzf go1.20.7.linux-amd64.tar.gz
+
+  - name: install GO (shell)
+    ansible.builtin.shell: export PATH=$PATH:/usr/local/go/bin
+
+
+  - name: download terraform (get_url)
+    ansible.builtin.get_url:
+      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/HdSPA8UM8hb35A
+      #dest: /tmp/elasticsearch-7.17.11-amd64.deb
+      #checksum: sha256:76ae0c7ce43bd8a5a6f2baf71b69c004f9d1e856e2edc22d42e491efe51d92bd
+      #mode: '0740'
+
+  - name: install terraform (shell)
+    ansible.builtin.shell: cp terraform /usr/local/bin/ && chmod uga+x /usr/local/bin/terraform
+
+  - name: config cli terraform (shell)
+    ansible.builtin.shell: touch ~/.bashrc && terraform -install-autocomplete
+
+...

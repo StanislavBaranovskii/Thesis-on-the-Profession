@@ -1,0 +1,2 @@
+vm-terraform ansible_host=51.250.69.108 ansible_connection=ssh ansible_ssh_user=root
+
