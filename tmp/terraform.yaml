@@ -8,9 +8,9 @@
   
   - name: Wait for target connection to become reachable/usable
     ansible.builtin.wait_for_connection:
-      delay: 20
+      delay: 5
       sleep: 2
-      timeout: 300
+      timeout: 30
 
   - name: Wait for port 22 to become open on the hosts
     ansible.builtin.wait_for:
@@ -25,7 +25,7 @@
   - name: download GO (get_url)
     ansible.builtin.get_url:
       url: https://go.dev/dl/go1.20.7.linux-amd64.tar.gz
-      #dest: /tmp/elasticsearch-7.17.11-amd64.deb
+      dest: ~/
       #checksum: sha256:76ae0c7ce43bd8a5a6f2baf71b69c004f9d1e856e2edc22d42e491efe51d92bd
       #mode: '0740'
 
@@ -36,12 +36,14 @@
     ansible.builtin.shell: export PATH=$PATH:/usr/local/go/bin
 
 
+#  - name: download terraform (get_url)
+#    ansible.builtin.get_url:
+#      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/HdSPA8UM8hb35A
+#      dest: ~/
+
   - name: download terraform (get_url)
-    ansible.builtin.get_url:
-      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/HdSPA8UM8hb35A
-      #dest: /tmp/elasticsearch-7.17.11-amd64.deb
-      #checksum: sha256:76ae0c7ce43bd8a5a6f2baf71b69c004f9d1e856e2edc22d42e491efe51d92bd
-      #mode: '0740'
+    ansible.builtin.shell: wget https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/HdSPA8UM8hb35A -O terraform
+
 
   - name: install terraform (shell)
     ansible.builtin.shell: cp terraform /usr/local/bin/ && chmod uga+x /usr/local/bin/terraform
