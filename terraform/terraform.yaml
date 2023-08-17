@@ -33,9 +33,16 @@
   
   tasks:
 
-  - name: Docker install
+  - name: Nano install
     ansible.builtin.apt:
       name: nano
+      state: present
+      update_cache: yes
+      cache_valid_time: 360
+
+  - name: Nano install
+    ansible.builtin.apt:
+      name: curl
       state: present
       update_cache: yes
       cache_valid_time: 360
@@ -60,14 +67,14 @@
 #      dest: ~/
 
   - name: download terraform (get_url)
-    ansible.builtin.shell: wget https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/HdSPA8UM8hb35A -O terraform
+    ansible.builtin.shell: wget https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/HdSPA8UM8hb35A -O terraform.bin
 
   - name: install terraform (shell)
-    ansible.builtin.shell: cp terraform /usr/local/bin/ && chmod uga+x /usr/local/bin/terraform
+    ansible.builtin.shell: mv terraform.bin /usr/local/bin/ && chmod uga+x /usr/local/bin/terraform
 
   - name: config cli terraform (shell)
     ansible.builtin.shell: touch ~/.bashrc && terraform -install-autocomplete
-
+    ignore_unreachable: true
 
   - name: push project tar.gz (copy)
     ansible.builtin.copy:
@@ -76,5 +83,22 @@
 
   - name: extract project tar.gz (shell)
     ansible.builtin.shell: tar -C ~/ -xzf project.tar.gz
+
+  - name: push key.json (copy)
+    ansible.builtin.copy:
+      src: ~/key.json
+      dest: ~/key.json
+
+  - name: yc cli install (shell)
+    ansible.builtin.shell: curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -a
+
+  - name: yc cli profile create (shell)
+    ansible.builtin.shell: yc config profile create sa-terraform 
+
+  - name: yc cli profile config (shell)
+    ansible.builtin.shell: yc config set service-account-key key.json && yc config set cloud-id b1g5d1h1bstlaq9so8fs && yc config set folder-id b1gadaampg6bbldf60up
+
+  - name: yc cli prepare (shell)
+    ansible.builtin.shell:  export YC_TOKEN=$(yc iam create-token) && export YC_CLOUD_ID=$(yc config get cloud-id) && export YC_FOLDER_ID=$(yc config get folder-id)
 
 ...
