@@ -1,5 +1,15 @@
 ---
-- name: Terraform-Host
+- name: Arhive File Project
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: false
+  tasks:
+  - name: create arhive project tar.gz
+    ansible.builtin.shell: tar -czf ~/project.tar.gz terraform/*
+    args:
+      chdir: ~/Thesis-on-the-Profession/
+
+- name: Terraform-Host-Up
   hosts: vm-terraform
 #  become: true
   gather_facts: false
@@ -22,6 +32,14 @@
     ansible.builtin.setup:
   
   tasks:
+
+  - name: Docker install
+    ansible.builtin.apt:
+      name: nano
+      state: present
+      update_cache: yes
+      cache_valid_time: 360
+
   - name: download GO (get_url)
     ansible.builtin.get_url:
       url: https://go.dev/dl/go1.20.7.linux-amd64.tar.gz
@@ -44,11 +62,19 @@
   - name: download terraform (get_url)
     ansible.builtin.shell: wget https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/HdSPA8UM8hb35A -O terraform
 
-
   - name: install terraform (shell)
     ansible.builtin.shell: cp terraform /usr/local/bin/ && chmod uga+x /usr/local/bin/terraform
 
   - name: config cli terraform (shell)
     ansible.builtin.shell: touch ~/.bashrc && terraform -install-autocomplete
+
+
+  - name: push project tar.gz (copy)
+    ansible.builtin.copy:
+      src: ~/project.tar.gz
+      dest: ~/project.tar.gz
+
+  - name: extract project tar.gz (shell)
+    ansible.builtin.shell: tar -C ~/ -xzf project.tar.gz
 
 ...
