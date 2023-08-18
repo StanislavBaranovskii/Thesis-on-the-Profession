@@ -10,3 +10,7 @@ terraform applay (3)
 
 terraform destroy
 
+
+# https://habr.com/ru/companies/nixys/articles/721404/
+
+

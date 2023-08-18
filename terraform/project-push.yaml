@@ -1,0 +1,44 @@
+---
+- name: Arhive File Project
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: false
+  tasks:
+  - name: create arhive project tar.gz
+    ansible.builtin.shell: tar -czf ~/project.tar.gz terraform/*
+    args:
+      chdir: ~/Thesis-on-the-Profession/
+
+- name: Terraform-Host-Up
+  hosts: vm-terraform
+#  become: true
+  gather_facts: false
+  
+  pre_tasks:
+  
+  - name: Wait for target connection to become reachable/usable
+    ansible.builtin.wait_for_connection:
+      delay: 5
+      sleep: 2
+      timeout: 30
+
+  - name: Wait for port 22 to become open on the hosts
+    ansible.builtin.wait_for:
+      port: 22
+      delay: 5
+      connect_timeout: 20
+
+  - name: Gather facts
+    ansible.builtin.setup:
+  
+  tasks:
+
+  - name: push project tar.gz (copy)
+    ansible.builtin.copy:
+      src: ~/project.tar.gz
+      dest: ~/project.tar.gz
+
+  - name: extract project tar.gz (shell)
+    ansible.builtin.shell: tar -C ~/ -xzf project.tar.gz
+
+...
