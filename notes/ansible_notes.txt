@@ -1,0 +1,5 @@
+ansible all -m ping   --extra-vars "ansible_user=root ansible_password=gNmk272H"
+
+ansible-playbook terraform-host.yaml --extra-vars "ansible_user=root ansible_password=gNmk272H"
+ansible-playbook terraform-host.yaml
+

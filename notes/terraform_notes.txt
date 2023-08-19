@@ -2,11 +2,11 @@ sudo snap install go --classic #ubuntu
 go version # go 1.20.7 
 
 
-terraform init
+terraform init (0)
 terraform validate (1)
 ? terraform fmt ?
 terraform plan (2)
-terraform applay (3)
+terraform apply (3)
 
 terraform destroy
 

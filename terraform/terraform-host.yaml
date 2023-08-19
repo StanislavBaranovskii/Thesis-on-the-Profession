@@ -40,7 +40,7 @@
       update_cache: yes
       cache_valid_time: 360
 
-  - name: Nano install
+  - name: Curl install
     ansible.builtin.apt:
       name: curl
       state: present
@@ -70,11 +70,12 @@
     ansible.builtin.shell: wget https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/HdSPA8UM8hb35A -O terraform.bin
 
   - name: install terraform (shell)
-    ansible.builtin.shell: mv terraform.bin /usr/local/bin/ && chmod uga+x /usr/local/bin/terraform
+    ansible.builtin.shell: mv terraform.bin /usr/local/bin/terraform && chmod uga+x /usr/local/bin/terraform
 
   - name: config cli terraform (shell)
-    ansible.builtin.shell: touch ~/.bashrc && terraform -install-autocomplete
+    ansible.builtin.shell: rm -rf /root/.bashrc && touch ~/.bashrc && terraform -install-autocomplete
     ignore_unreachable: true
+    ignore_errors: true
 
   - name: push project tar.gz (copy)
     ansible.builtin.copy:
@@ -89,16 +90,46 @@
       src: ~/key.json
       dest: ~/key.json
 
+  - name: mkdir .ssh (shell)
+    ansible.builtin.shell: if [ ! -f ~/.ssh/id_ed25519.pub ]; then mkdir ~/.ssh; fi
+    ignore_unreachable: true
+    ignore_errors: true
+
+  - name: push id_ed25519.pub (copy)
+    ansible.builtin.copy:
+      src: ~/.ssh/id_ed25519.pub
+      dest: ~/.ssh/id_ed25519.pub
+      mode: '0644'
+
   - name: yc cli install (shell)
     ansible.builtin.shell: curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -a
 
+  - name: yc cli bash config (shell)
+    ansible.builtin.shell: export PATH=$PATH:/root/yandex-cloud/bin
+
   - name: yc cli profile create (shell)
-    ansible.builtin.shell: yc config profile create sa-terraform 
+    ansible.builtin.shell: yc config profile create sa-terraform
+    ignore_errors: true
 
   - name: yc cli profile config (shell)
     ansible.builtin.shell: yc config set service-account-key key.json && yc config set cloud-id b1g5d1h1bstlaq9so8fs && yc config set folder-id b1gadaampg6bbldf60up
 
-  - name: yc cli prepare (shell)
-    ansible.builtin.shell:  export YC_TOKEN=$(yc iam create-token) && export YC_CLOUD_ID=$(yc config get cloud-id) && export YC_FOLDER_ID=$(yc config get folder-id)
+#  - name: yc cli prepare (shell)
+#    ansible.builtin.shell:  export YC_TOKEN=$(yc iam create-token) && export YC_CLOUD_ID=$(yc config get cloud-id) && export YC_FOLDER_ID=$(yc config get folder-id)
 
+    #раскидать по отдельным задачам
+#  - name: yc cli prepare (shell)
+#    ansible.builtin.shell:  echo "export YC_TOKEN=\"$(yc iam create-token)\"" >> ~/.bashrc && echo "export YC_CLOUD_ID=$(yc config get cloud-id)\"" >> ~/.bashrc && echo "export YC_FOLDER_ID=$(yc config get folder-id)\"" >> ~/.bashrc && source ~/.bashrc
+
+  - name: yc cli prepare 1 (shell)
+    ansible.builtin.shell:  echo "export YC_TOKEN=\"$(yc iam create-token)\"" >> ~/.bashrc
+
+  - name: yc cli prepare 2 (shell)
+    ansible.builtin.shell:  echo "export YC_CLOUD_ID=$(yc config get cloud-id)\"" >> ~/.bashrc
+
+  - name: yc cli prepare 3 (shell)
+    ansible.builtin.shell:  echo "export YC_FOLDER_ID=$(yc config get folder-id)\"" >> ~/.bashrc
+
+  - name: yc cli prepare 5 (shell)
+    ansible.builtin.shell:  source ~/.bashrc
 ...
