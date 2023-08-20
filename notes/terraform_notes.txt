@@ -13,4 +13,6 @@ terraform destroy
 
 # https://habr.com/ru/companies/nixys/articles/721404/
 
+terraform import yandex_compute_snapshot_schedule.my-schedule snapshot_schedule_id
+terraform import yandex_compute_disk.default disk_id
 

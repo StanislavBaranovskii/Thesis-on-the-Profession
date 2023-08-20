@@ -3,12 +3,12 @@ resource "yandex_alb_target_group" "my_target_group" {
   description    = "ALB:Целевая группа"
   target {
     subnet_id    = yandex_vpc_subnet.subnet_a.id
-    ip_address   = yandex_compute_instance.vm_web_1.network_interface.ip_address
+    ip_address   = yandex_compute_instance.vm_web_1.network_interface[0].ip_address
   }
 
   target {
     subnet_id    = yandex_vpc_subnet.subnet_b.id
-    ip_address   = yandex_compute_instance.vm_web_2.network_interface.ip_address
+    ip_address   = yandex_compute_instance.vm_web_2.network_interface[0].ip_address
   }
   
   depends_on = [
@@ -39,6 +39,10 @@ resource "yandex_alb_backend_group" "my_backend_group" {
       }
     }
   }
+  
+  depends_on = [
+     yandex_alb_target_group.my_target_group,
+  ]
 }
 
 
@@ -49,16 +53,21 @@ resource "yandex_alb_http_router" "my_http_router" {
 
 resource "yandex_alb_virtual_host" "my_virtual_host" {
   name                    = "project-vhost"
-  http_router_id          = ["${yandex_alb_http_router.my_http_router.id}"]
+  http_router_id          = "${yandex_alb_http_router.my_http_router.id}"
   route {
     name                  = "project-route"
     http_route {
       http_route_action {
-        backend_group_id  = ["${yandex_alb_backend_group.my_backend_group.id}"]
+        backend_group_id  = "${yandex_alb_backend_group.my_backend_group.id}"
         timeout           = "60s"
       }
     }
   }
+  
+  depends_on = [
+     yandex_alb_http_router.my_http_router,
+     yandex_alb_backend_group.my_backend_group,
+  ]
 }
 
 
@@ -70,11 +79,11 @@ resource "yandex_alb_load_balancer" "my_alb" {
   allocation_policy {
     location {
       zone_id   = "ru-central1-a"
-      subnet_id = yandex_vpc_subnet.subnet_a.id
+      subnet_id = "${yandex_vpc_subnet.subnet_a.id}"
     }
     location {
       zone_id   = "ru-central1-b"
-      subnet_id = yandex_vpc_subnet.subnet_b.id
+      subnet_id = "${yandex_vpc_subnet.subnet_b.id}"
     }
   }
 
@@ -89,9 +98,13 @@ resource "yandex_alb_load_balancer" "my_alb" {
     }
     http {
       handler {
-        http_router_id = yandex_alb_http_router.my_http_router.id
+        http_router_id = "${yandex_alb_http_router.my_http_router.id}"
       }
     }
   }
+  
+  depends_on = [
+     yandex_alb_http_router.my_http_router,
+  ]
 }
 
