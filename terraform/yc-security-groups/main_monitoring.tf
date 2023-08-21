@@ -1,25 +1,25 @@
-resource "yandex_compute_instance" "vm_web_1" {
-  name                      = "vm-web1"
+resource "yandex_compute_instance" "vm_prometheus" {
+  name                      = "vm-prometheus"
   allow_stopping_for_update = true
   platform_id               = "standard-v1"
   zone                      = "ru-central1-a"
-  hostname                  = "debian-vm-web1"
+  hostname                  = "debian-vm-prometheus"
 
   resources {
     cores          = 2
-    memory         = 1
+    memory         = 2
     core_fraction  = 20
   }
 
   boot_disk {
-    disk_id     = "${yandex_compute_disk.disk_web_1.id}"
+    disk_id     = "${yandex_compute_disk.disk_prometheus.id}"
   }
   
   network_interface {
     subnet_id   = "${yandex_vpc_subnet.subnet_a.id}"
-    ip_address  = "10.128.0.11"
+    ip_address  = "10.128.0.21"
     nat         = false
-    security_group_ids  = ["${yandex_vpc_security_group.sg_web.id}"]
+    security_group_ids  = ["${yandex_vpc_security_group.sg_prometheus.id}"]
   }
   
   scheduling_policy {
@@ -33,28 +33,29 @@ resource "yandex_compute_instance" "vm_web_1" {
   }
 }
 
-resource "yandex_compute_instance" "vm_web_2" {
-  name                      = "vm-web2"
+resource "yandex_compute_instance" "vm_grafana" {
+  name                      = "vm-grafana"
   allow_stopping_for_update = true
   platform_id               = "standard-v1"
-  zone                      = "ru-central1-b"
-  hostname                  = "debian-vm-web2"
+  zone                      = "ru-central1-a"
+  hostname                  = "debian-vm-grafana"
 
   resources {
     cores          = 2
-    memory         = 1
+    memory         = 2
     core_fraction  = 20
   }
 
   boot_disk {
-    disk_id     = "${yandex_compute_disk.disk_web_2.id}"
+    disk_id     = "${yandex_compute_disk.disk_grafana.id}"
   }
   
+  
   network_interface {
-    subnet_id   = "${yandex_vpc_subnet.subnet_b.id}"
-    ip_address  = "10.129.0.11"
-    nat         = false
-    security_group_ids  = ["${yandex_vpc_security_group.sg_web.id}"]
+    subnet_id   = "${yandex_vpc_subnet.subnet_a.id}"
+    ip_address  = "10.128.0.22"
+    nat         = true
+    security_group_ids  = ["${yandex_vpc_security_group.sg_grafana.id}"]
   }
   
   scheduling_policy {
