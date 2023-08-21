@@ -117,7 +117,8 @@
 #  - name: yc cli prepare (shell)
 #    ansible.builtin.shell:  export YC_TOKEN=$(yc iam create-token) && export YC_CLOUD_ID=$(yc config get cloud-id) && export YC_FOLDER_ID=$(yc config get folder-id)
 
-    #раскидать по отдельным задачам
+    #раскидать по отдельным задачам, раскидал, не работает!
+    #после подключения по ssh выполнить : export YC_TOKEN=$(yc iam create-token) && export YC_CLOUD_ID=$(yc config get cloud-id) && export YC_FOLDER_ID=$(yc config get folder-id)
 #  - name: yc cli prepare (shell)
 #    ansible.builtin.shell:  echo "export YC_TOKEN=\"$(yc iam create-token)\"" >> ~/.bashrc && echo "export YC_CLOUD_ID=$(yc config get cloud-id)\"" >> ~/.bashrc && echo "export YC_FOLDER_ID=$(yc config get folder-id)\"" >> ~/.bashrc && source ~/.bashrc
 

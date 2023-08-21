@@ -35,7 +35,7 @@ resource "yandex_compute_disk" "disk_kibana" {
 
 
 resource "yandex_compute_disk" "disk_prometheus" {
-  name     = "disk-elastic"
+  name     = "disk-prometheus"
   type     = "network-hdd"
   zone     = "ru-central1-a"
   image_id = "fd83u9thmahrv9lgedrk"
@@ -44,7 +44,7 @@ resource "yandex_compute_disk" "disk_prometheus" {
 
 
 resource "yandex_compute_disk" "disk_grafana" {
-  name     = "disk-kibana"
+  name     = "disk-grafana"
   type     = "network-hdd"
   zone     = "ru-central1-a"
   image_id = "fd83u9thmahrv9lgedrk"

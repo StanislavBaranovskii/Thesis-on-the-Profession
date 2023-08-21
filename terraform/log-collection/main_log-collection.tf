@@ -28,6 +28,7 @@ resource "yandex_compute_instance" "vm_elastic" {
 
   metadata = {
     ssh-keys    = "yc-user:${file("~/.ssh/id_ed25519.pub")}"
+    user-data   = "#cloud-config\ndatasource:\n Ec2:\n  strict_id: false\nssh_pwauth: no\nusers:\n- name: yc-user\n  sudo: ALL=(ALL) NOPASSWD:ALL\n  shell: /bin/bash\n  ssh_authorized_keys:\n  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIERNr0N5ErxpchHSDIj/sUiDBrmEzqVDA3CT4vNjb0U5 baranovskii@baranovskyiiTravelMate"
   }
 }
 
@@ -61,5 +62,6 @@ resource "yandex_compute_instance" "vm_kibana" {
 
   metadata = {
     ssh-keys    = "yc-user:${file("~/.ssh/id_ed25519.pub")}"
+    user-data   = "#cloud-config\ndatasource:\n Ec2:\n  strict_id: false\nssh_pwauth: no\nusers:\n- name: yc-user\n  sudo: ALL=(ALL) NOPASSWD:ALL\n  shell: /bin/bash\n  ssh_authorized_keys:\n  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIERNr0N5ErxpchHSDIj/sUiDBrmEzqVDA3CT4vNjb0U5 baranovskii@baranovskyiiTravelMate"
   }
 }

@@ -139,6 +139,15 @@ do
 done
 yc vpc network list
 
+#yc compute disk list
+echo "Computer Disk..."
+for NAME in $(yc compute disk list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove compute disk: $NAME"
+  yc compute disk delete $NAME
+done
+yc compute disk list
+
 ##Folder (VPC)
 #echo "Folder (VPC)..."
 #yc resource-manager folder delete --name $(yc config get folder-name) --async &>/dev/null

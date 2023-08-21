@@ -19,6 +19,7 @@ resource "yandex_compute_instance" "vm_web_1" {
     subnet_id   = "${yandex_vpc_subnet.subnet_a.id}"
     ip_address  = "10.128.0.11"
     nat         = true
+    security_group_ids  = ["${yandex_vpc_security_group.sg-web.id}"]
   }
   
   scheduling_policy {
@@ -53,6 +54,7 @@ resource "yandex_compute_instance" "vm_web_2" {
     subnet_id   = "${yandex_vpc_subnet.subnet_b.id}"
     ip_address  = "10.129.0.11"
     nat         = true
+    security_group_ids  = ["${yandex_vpc_security_group.sg-web.id}"]
   }
   
   scheduling_policy {
