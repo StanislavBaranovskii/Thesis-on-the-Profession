@@ -122,17 +122,17 @@ fi
 
 #Разворачиваем две ВМ: Elasticsearch и Kibana
 echo -e "\n # Разворачиваем ВМ Elasticsearch и Kibana \n"
-~/Thesis-on-the-Profession/cloud-elk-install
+~/Thesis-on-the-Profession/yc_cli/cloud-elk-install
 #if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 #Разворачиваем две ВМ: web сервера
 echo -e "\n # Разворачиваем ВМ web сервера \n"
-~/Thesis-on-the-Profession/cloud-web-install
+~/Thesis-on-the-Profession/yc_cli/cloud-web-install
 #if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 #Разворачиваем две ВМ: Prometheus и Grafana
 echo -e "\n # Разворачиваем ВМ Prometheus и Grafana \n"
-~/Thesis-on-the-Profession/cloud-monitoring-install
+~/Thesis-on-the-Profession/yc_cli/cloud-monitoring-install
 #if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 
@@ -154,22 +154,22 @@ echo "########################################################################
 
 #Создаем группы безопасности
 echo -e "\n # Создаём группы безопасности \n"
-~/Thesis-on-the-Profession/cloud-sg-create
+~/Thesis-on-the-Profession/yc_cli/cloud-sg-create
 if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 #Освобождаем неиспользуемые публичные IP адреса
 echo -e "\n # Освобождаем неиспользуемых публичные IP адреса \n"
-~/Thesis-on-the-Profession/cloud-remove-one-to-one-nat
+~/Thesis-on-the-Profession/yc_cli/cloud-remove-one-to-one-nat
 if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 #Планировщик создания снимков дисков ВМ
 echo -e "\n # Планировщик создания снимков дисков ВМ \n"
-~/Thesis-on-the-Profession/cloud-snapshot-shed-create
+~/Thesis-on-the-Profession/yc_cli/cloud-snapshot-shed-create
 if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 #Создаём L7-балансировщик
 echo -e "\n # Создаём L7-балансировщик \n"
-~/Thesis-on-the-Profession/cloud-alb-create
+~/Thesis-on-the-Profession/yc_cli/cloud-alb-create
 if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 
