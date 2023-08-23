@@ -5,10 +5,10 @@ filebeat.inputs:
 #  paths:
 #    - /var/log/*.log
 - type: filestream
-  id: nginx-filestream-id
+  id: kibana-filestream-id
   enabled: true
   paths:
-    - /var/log/nginx/*.log
+    - /var/log/kibana/*.log
 
 # ============================== Filebeat modules ==============================
 filebeat.config.modules:

@@ -128,13 +128,13 @@
 
   - name: Copy filebeat.yml
     ansible.builtin.copy:
-      src: ~/Thesis-on-the-Profession/logs/filebeat.yml
+      src: ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
       dest: /etc/filebeat/filebeat.yml
       mode: '0600'
       
   - name: Copy nginx.yml.disabled
     ansible.builtin.copy:
-      src: ~/Thesis-on-the-Profession/logs/nginx.yml.disabled
+      src: ~/Thesis-on-the-Profession/logs/filebeat/nginx.yml.disabled
       dest: /etc/filebeat/modules.d/nginx.yml.disabled
       mode: preserve
 

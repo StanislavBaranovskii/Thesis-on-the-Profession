@@ -2,6 +2,7 @@
 #
 
 #Скрипт разворачивания облачной инфраструктуры в Yandex Cloud
+#С использованием Terraform
 
 ########################################################################
 #Создание виртуального частного облака (Virtual Private Cloud):
@@ -18,6 +19,135 @@ RANGE_ZA_IP=10.128.0.0/24
 ZONE_B_NAME=ru-central1-b
 SUBNET_ZB_NAME=$NETWORK_NAME-$ZONE_B_NAME
 RANGE_ZB_IP=10.129.0.0/24
+
+
+
+
+
+
+
+
+
+
+
+#
+export YC_TOKEN=$(yc iam create-token)
+export YC_CLOUD_ID=$(yc config get cloud-id)
+export YC_FOLDER_ID=$(yc config get folder-id)
+
+#
+cd ~/Thesis-on-the-Profession/terraform
+terraform init
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА выполнения terraform init"
+    exit 1
+fi
+
+# 1. Разворачиваем ВМ (terraform)
+
+# 1.1. Подготовка
+cp -f ~/Thesis-on-the-Profession/terraform/log-collection/main_log-collection.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/website/main_website.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/monitoring/main_monitoring.tf ~/Thesis-on-the-Profession/terraform/
+
+rm -f ~/Thesis-on-the-Profession/terraform/yc-sg.tf
+rm -f ~/Thesis-on-the-Profession/terraform/alb.tf
+rm -f ~/Thesis-on-the-Profession/terraform/yc_snapshot_schedule.tf 
+
+# 1.2. Разворачивание
+terraform plan
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА выполнения terraform plan"
+    exit 1
+fi
+
+terraform apply
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА выполнения terraform "
+    exit 1
+fi
+
+# 2. Поднимаем на ВМ сервисы (ansible)
+
+#Разворачиваем две ВМ: Elasticsearch и Kibana
+echo -e "\n # Разворачиваем ВМ Elasticsearch и Kibana \n"
+~/Thesis-on-the-Profession/yc_cli/cloud-elk-install
+#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Разворачиваем две ВМ: web сервера
+echo -e "\n # Разворачиваем ВМ web сервера \n"
+~/Thesis-on-the-Profession/yc_cli/cloud-web-install
+#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Разворачиваем две ВМ: Prometheus и Grafana
+echo -e "\n # Разворачиваем ВМ Prometheus и Grafana \n"
+~/Thesis-on-the-Profession/yc_cli/cloud-monitoring-install
+#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+# 3. Финишная конфигурация
+
+# 3.1. Подготовка
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/yc-sg.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_log-collection.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_website.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_monitoring.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-application-load-balancer/alb.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-snapshots/yc_snapshot_schedule.tf ~/Thesis-on-the-Profession/terraform/
+
+# 1.2. Разворачивание
+terraform plan
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА выполнения terraform plan"
+    exit 1
+fi
+
+terraform apply
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА выполнения terraform "
+    exit 1
+fi
+
+
+########################################################################
+#Облачная инфраструктура развернута.
+#Печатаем список созданных ресурсов.
+########################################################################
+
+echo "########################################################################
+#Облачная инфраструктура развернута.
+#Печатаем список созданных ресурсов.
+########################################################################"
+
+
+echo -e "\n # Текущий каталог : $CURRENT_FOLDER_NAME \n"
+echo " # Список сетей в каталоге $CURRENT_FOLDER_NAME :"
+yc vpc network list
+echo " # Список подсетей в каталоге $CURRENT_FOLDER_NAME (сеть: $NETWORK_NAME) :"
+yc vpc subnet list
+
+echo " # Список созданных ВМ :"
+yc compute instance list
+
+PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -iE "^[ ]{14}address: " |awk '{print $ 2}')
+echo -e " #\n # Публичный IP адрес балансера alb : $PUB_IP_ALB \n #\n"
+
+echo "Список созданных групп безопасности :"
+yc vpc security-group get
+
+echo "Список расписаний создания снимков дисков :"
+yc compute snapshot-schedule list
+
+
+
+
+
+
+
+
+
+
+
+
 
 echo "########################################################################
 #Создание виртуального частного облака (Virtual Private Cloud):
@@ -152,35 +282,25 @@ echo "########################################################################
 # - Планировщик создания снимков дисков ВМ
 ########################################################################"
 
+#Создаем группы безопасности
+echo -e "\n # Создаём группы безопасности \n"
+~/Thesis-on-the-Profession/yc_cli/cloud-sg-create
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Освобождаем неиспользуемые публичные IP адреса
+echo -e "\n # Освобождаем неиспользуемых публичные IP адреса \n"
+~/Thesis-on-the-Profession/yc_cli/cloud-remove-one-to-one-nat
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Планировщик создания снимков дисков ВМ
+echo -e "\n # Планировщик создания снимков дисков ВМ \n"
+~/Thesis-on-the-Profession/yc_cli/cloud-snapshot-shed-create
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+
+#Создаём L7-балансировщик
+echo -e "\n # Создаём L7-балансировщик \n"
+~/Thesis-on-the-Profession/yc_cli/cloud-alb-create
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
 
 
-
-########################################################################
-#Облачная инфраструктура развернута.
-#Печатаем список созданных ресурсов.
-########################################################################
-
-echo "########################################################################
-#Облачная инфраструктура развернута.
-#Печатаем список созданных ресурсов.
-########################################################################"
-
-
-echo -e "\n # Текущий каталог : $CURRENT_FOLDER_NAME \n"
-echo " # Список сетей в каталоге $CURRENT_FOLDER_NAME :"
-yc vpc network list
-echo " # Список подсетей в каталоге $CURRENT_FOLDER_NAME (сеть: $NETWORK_NAME) :"
-yc vpc subnet list
-
-echo " # Список созданных ВМ :"
-yc compute instance list
-
-PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -iE "^[ ]{14}address: " |awk '{print $ 2}')
-echo -e " #\n # Публичный IP адрес балансера alb : $PUB_IP_ALB \n #\n"
-
-echo "Список созданных групп безопасности :"
-yc vpc security-group get
-
-echo "Список расписаний создания снимков дисков :"
-yc compute snapshot-schedule list
 

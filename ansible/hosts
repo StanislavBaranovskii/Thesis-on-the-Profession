@@ -1,9 +1,9 @@
 [logs]
-vm-elastic ansible_host=158.160.105.238 ansible_connection=ssh ansible_ssh_user=yc-user
-vm-kibana ansible_host=84.201.133.46 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-elastic ansible_host=158.160.43.220 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-kibana ansible_host=51.250.88.115 ansible_connection=ssh ansible_ssh_user=yc-user
 [web]
-vm-web1 ansible_host=51.250.2.233 ansible_connection=ssh ansible_ssh_user=yc-user
-vm-web2 ansible_host=51.250.25.210 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-web1 ansible_host=51.250.66.215 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-web2 ansible_host=158.160.18.176 ansible_connection=ssh ansible_ssh_user=yc-user
 [mons]
-vm-prometheus ansible_host=158.160.49.178 ansible_connection=ssh ansible_ssh_user=yc-user
-vm-grafana ansible_host=158.160.40.59 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-prometheus ansible_host=51.250.85.253 ansible_connection=ssh ansible_ssh_user=yc-user
+vm-grafana ansible_host=51.250.88.43 ansible_connection=ssh ansible_ssh_user=yc-user

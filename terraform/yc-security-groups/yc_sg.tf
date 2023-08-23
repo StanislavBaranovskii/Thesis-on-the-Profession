@@ -45,12 +45,6 @@ resource "yandex_vpc_security_group" "sg_web" {
     port               = 9200
   }
 
-  egress {
-    protocol           = "TCP"
-    description        = "to internal Kibana from Filebeat"
-    v4_cidr_blocks     = ["10.128.0.0/16"]
-    port               = 5601
-  }
   
   depends_on = [
      yandex_compute_instance.vm_grafana,
@@ -92,6 +86,13 @@ resource "yandex_vpc_security_group" "sg_prometheus" {
     port               = 4040
   }
   
+  egress {
+    protocol           = "TCP"
+    description        = "to internal Elasticsearch from Filebeat"
+    v4_cidr_blocks     = ["10.128.0.0/16"]
+    port               = 9200
+  }
+  
   depends_on = [
      yandex_compute_instance.vm_grafana,
   ]
@@ -130,6 +131,13 @@ resource "yandex_vpc_security_group" "sg_grafana" {
     description        = "to internal VM SSH from Grafana"
     v4_cidr_blocks     = ["10.128.0.0/16", "10.129.0.0/16", "10.130.0.0/16"]
     port               = 22
+  }
+  
+  egress {
+    protocol           = "TCP"
+    description        = "to internal Elasticsearch from Filebeat"
+    v4_cidr_blocks     = ["10.128.0.0/16"]
+    port               = 9200
   }
 }
 
@@ -191,6 +199,13 @@ resource "yandex_vpc_security_group" "sg_kibana" {
     protocol           = "TCP"
     description        = "to internal Elasticsearch from Kibana"
     v4_cidr_blocks     = ["10.128.0.0/16", "10.129.0.0/16"]
+    port               = 9200
+  }
+  
+  egress {
+    protocol           = "TCP"
+    description        = "to internal Elasticsearch from Filebeat"
+    v4_cidr_blocks     = ["10.128.0.0/16"]
     port               = 9200
   }
   

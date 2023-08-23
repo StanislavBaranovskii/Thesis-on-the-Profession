@@ -224,7 +224,7 @@
 
 ##############################################
 
-- name: filebeat prometheus start
+- name: filebeat on prometheus start
   hosts: vm-prometheus
   become: true
   
@@ -232,26 +232,9 @@
 
   - name: Copy filebeat.yml
     ansible.builtin.copy:
-      src: ~/Thesis-on-the-Profession/logs/filebeat_prometheus.yml
+      src: ~/Thesis-on-the-Profession/logs/filebeat/filebeat_prometheus.yml
       dest: /etc/filebeat/filebeat.yml
       mode: '0600'
-      
-#  - name: Copy nginx.yml.disabled
-#    ansible.builtin.copy:
-#      src: ~/Thesis-on-the-Profession/logs/nginx.yml.disabled
-#      dest: /etc/filebeat/modules.d/nginx.yml.disabled
-#      mode: preserve
-
-#  - name: Enable nginx module - copy nginx.yml.disabled to nginx.yml
-#    ansible.builtin.copy:
-#      remote_src: true
-#      src: /etc/filebeat/modules.d/nginx.yml.disabled
-#      dest: /etc/filebeat/modules.d/nginx.yml
-
-#  - name: Enable nginx module - remove nginx.yml.disabled
-#    ansible.builtin.file:
-#      path: /etc/filebeat/modules.d/nginx.yml.disabled
-#      state: absent
 
   - name: Enable service filebeat
     ansible.builtin.service:
@@ -265,7 +248,7 @@
 
 ##############################################
 
-- name: filebeat prometheus start
+- name: filebeat on grafana start
   hosts: vm-grafana
   become: true
   
@@ -273,27 +256,10 @@
 
   - name: Copy filebeat.yml
     ansible.builtin.copy:
-      src: ~/Thesis-on-the-Profession/logs/filebeat_grafana.yml
+      src: ~/Thesis-on-the-Profession/logs/filebeat/filebeat_grafana.yml
       dest: /etc/filebeat/filebeat.yml
       mode: '0600'
       
-#  - name: Copy nginx.yml.disabled
-#    ansible.builtin.copy:
-#      src: ~/Thesis-on-the-Profession/logs/nginx.yml.disabled
-#      dest: /etc/filebeat/modules.d/nginx.yml.disabled
-#      mode: preserve
-
-#  - name: Enable nginx module - copy nginx.yml.disabled to nginx.yml
-#    ansible.builtin.copy:
-#      remote_src: true
-#      src: /etc/filebeat/modules.d/nginx.yml.disabled
-#      dest: /etc/filebeat/modules.d/nginx.yml
-
-#  - name: Enable nginx module - remove nginx.yml.disabled
-#    ansible.builtin.file:
-#      path: /etc/filebeat/modules.d/nginx.yml.disabled
-#      state: absent
-
   - name: Enable service filebeat
     ansible.builtin.service:
       name: filebeat.service

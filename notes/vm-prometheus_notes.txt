@@ -74,3 +74,10 @@ sudo usermod -aG adm root #Процесс prometheus-nginxlog-exporter запу�
 for each in {1..10}; do curl http://<Внешний_IP ; done
 
 
+#####################################################
+
+sudo mkdir /var/log/prometheus/
+sudo chown prometheus:prometheus /var/log/prometheus/
+
+/usr/local/bin/prometheus --config.file /etc/prometheus/prometheus.yml --storage.tsdb.path /var/lib/prometheus/ --log.level info --log.format logfmt --web.console.templates=/etc/prometheus/consoles --web.console.libraries=/etc/prometheus/console_libraries | sudo tee -a /var/log/prometheus/prometheus.log
+

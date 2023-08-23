@@ -32,8 +32,9 @@ if [ $? -ne 0 ]; then
     --rule description="from internal to metrics node-exporter",direction=ingress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
     --rule description="from internal to metrics nginxlog-exporter",direction=ingress,port=4040,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
     --rule description="loadbalancer healthchecks",direction=ingress,port=any,protocol=any,predefined=loadbalancer_healthchecks \
-    --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
-    --rule description="to internal Kibana from Filebeat",direction=egress,port=5601,protocol=tcp,v4-cidrs=[10.128.0.0/16]
+    --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16]
+#    --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
+#    --rule description="to internal Kibana from Filebeat",direction=egress,port=5601,protocol=tcp,v4-cidrs=[10.128.0.0/16]
     if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для WEB не создана."; exit 1; fi 
 else
     echo "## Группа безопасности для WEB уже существует."
@@ -63,6 +64,7 @@ if [ $? -ne 0 ]; then
     --rule description="from internal Grafana to Prometheus",direction=ingress,port=9090,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
     --rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
     --rule description="to internal Node Exporter from Prometheus",direction=egress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
+    --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
     --rule description="to internal Nginx Log Exporter from Prometheus",direction=egress,port=4040,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
     if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для Prometheus не создана."; exit 1; fi 
 else
@@ -91,6 +93,7 @@ if [ $? -ne 0 ]; then
     --rule description="in Grafana GUI",direction=ingress,port=3000,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
     --rule description="in Grafana SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
     --rule description="to internal Prometheus from Grafana",direction=egress,port=9090,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
+    --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
     --rule description="to internal VM SSH from Grafana",direction=egress,port=22,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16,10.130.0.0/16]
     if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для Grafana не создана."; exit 1; fi 
 else
@@ -143,6 +146,7 @@ if [ $? -ne 0 ]; then
     yc vpc security-group create --name sg-kibana --description "SG для Kibana" --network-id $NETWORK_ID \
     --rule description="in Kibana GUI",direction=ingress,port=5601,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
     --rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
+    --rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
     --rule description="to internal Elasticsearch from Kibana",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
     if [ $? -ne 0 ]; then echo "## ОШИБКА. Группа безопасности для Kibana не создана."; exit 1; fi 
 else

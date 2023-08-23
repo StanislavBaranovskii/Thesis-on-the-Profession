@@ -8,12 +8,14 @@ tar xvfz prometheus-2.45.0.linux-amd64.tar.gz
 cd prometheus-2.45.0.linux-amd64/
 sudo mkdir /etc/prometheus
 sudo mkdir /var/lib/prometheus
+sudo mkdir /var/log/prometheus
 sudo cp  ./prometheus promtool /usr/local/bin/
 sudo cp -R ./console_libraries /etc/prometheus
 sudo cp -R ./consoles /etc/prometheus
 sudo cp -f ./prometheus.yml /etc/prometheus
 sudo chown -R prometheus:prometheus /etc/prometheus
 sudo chown -R prometheus:prometheus /var/lib/prometheus
+sudo chown -R prometheus:prometheus /var/log/prometheus
 sudo chown prometheus:prometheus /usr/local/bin/prometheus
 sudo chown prometheus:prometheus /usr/local/bin/promtool
 /usr/local/bin/prometheus --config.file /etc/prometheus/prometheus.yml --storage.tsdb.path /var/lib/prometheus/ --web.console.templates=/etc/prometheus/consoles --web.console.libraries=/etc/prometheus/console_libraries

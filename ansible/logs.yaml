@@ -66,7 +66,7 @@
 
   - name: Copy elasticsearch.yml
     ansible.builtin.copy:
-      src: ~/Thesis-on-the-Profession/logs/elasticsearch.yml
+      src: ~/Thesis-on-the-Profession/logs/elasticsearch/elasticsearch.yml
       dest: /etc/elasticsearch/elasticsearch.yml
       mode: preserve
 
@@ -129,7 +129,7 @@
 
   - name: Copy kibana.yml
     ansible.builtin.copy:
-      src: ~/Thesis-on-the-Profession/logs/kibana.yml
+      src: ~/Thesis-on-the-Profession/logs/kibana/kibana.yml
       dest: /etc/kibana/kibana.yml
       mode: preserve
 
@@ -151,5 +151,119 @@
 #  #Kibana must be running and reachable
 #  - name: Setup dashboards in kibana
 #    ansible.builtin.command: filebeat setup --dashboards
+
+##############################################
+ 
+- name: filebeat install
+  hosts: logs
+  become: true
+  
+  tasks:
+#  - name: Push filebeat-7.17.11-amd64.deb (copy - SHA256)
+#    ansible.builtin.copy:
+#      src: ~/packages/filebeat-7.17.11-amd64.deb
+#      #src: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
+#      dest: /tmp/filebeat-7.17.11-amd64.deb
+#      checksum: sha256:b3dd37d178b30f07bd0b1585d2d5ed7d7b0f3a8fc0247cc1706e1e69a970608b
+#      remote_src: false
+#      #mode: preserve
+
+  - name: Push filebeat-7.17.11-amd64.deb (get_url - SHA256)
+    ansible.builtin.get_url:
+      #url: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
+      url: https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/9b2hYmXUAv63zg
+      dest: /tmp/filebeat-7.17.11-amd64.deb
+      checksum: sha256:b3dd37d178b30f07bd0b1585d2d5ed7d7b0f3a8fc0247cc1706e1e69a970608b
+      #mode: '0740'
+
+#  - name: Push filebeat-7.17.11-amd64.deb (https://getfile.dokpub.com/yandex/)
+#    ansible.builtin.shell: wget "https://getfile.dokpub.com/yandex/get/https://disk.yandex.ru/d/9b2hYmXUAv63zg" -O /tmp/filebeat-7.17.11-amd64.deb
+
+  - name: Install filebeat
+    ansible.builtin.apt:
+      deb: /tmp/filebeat-7.17.11-amd64.deb
+      #deb: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.11-amd64.deb
+
+##############################################
+
+- name: filebeat on elastic start
+  hosts: vm-elastic
+  become: true
+  
+  tasks:
+
+  - name: Copy filebeat.yml
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/logs/filebeat/filebeat_elasticsearch.yml
+      dest: /etc/filebeat/filebeat.yml
+      mode: '0600'
+      
+  - name: Copy elasticsearch.yml.disabled
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/logs/filebeat/elasticsearch.yml.disabled
+      dest: /etc/filebeat/modules.d/elasticsearch.yml.disabled
+      mode: preserve
+
+  - name: Enable elasticsearch module - copy elasticsearch.yml.disabled to elasticsearch.yml
+    ansible.builtin.copy:
+      remote_src: true
+      src: /etc/filebeat/modules.d/elasticsearch.yml.disabled
+      dest: /etc/filebeat/modules.d/elasticsearch.yml
+
+  - name: Enable elasticsearch module - remove elasticsearch.yml.disabled
+    ansible.builtin.file:
+      path: /etc/filebeat/modules.d/elasticsearch.yml.disabled
+      state: absent
+
+  - name: Enable service filebeat
+    ansible.builtin.service:
+      name: filebeat.service
+      enabled: yes
+  
+  - name: Start service filebeat
+    ansible.builtin.service:
+      name: filebeat.service
+      state: started
+
+##############################################
+
+- name: filebeat on kibana start
+  hosts: vm-kibana
+  become: true
+  
+  tasks:
+
+  - name: Copy filebeat.yml
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/logs/filebeat/filebeat_kibana.yml
+      dest: /etc/filebeat/filebeat.yml
+      mode: '0600'
+      
+  - name: Copy kibana.yml.disabled
+    ansible.builtin.copy:
+      src: ~/Thesis-on-the-Profession/logs/filebeat/kibana.yml.disabled
+      dest: /etc/filebeat/modules.d/kibana.yml.disabled
+      mode: preserve
+
+  - name: Enable kibana module - copy kibana.yml.disabled to kibana.yml
+    ansible.builtin.copy:
+      remote_src: true
+      src: /etc/filebeat/modules.d/kibana.yml.disabled
+      dest: /etc/filebeat/modules.d/kibana.yml
+
+  - name: Enable kibana module - remove kibana.yml.disabled
+    ansible.builtin.file:
+      path: /etc/filebeat/modules.d/kibana.yml.disabled
+      state: absent
+
+  - name: Enable service filebeat
+    ansible.builtin.service:
+      name: filebeat.service
+      enabled: yes
+  
+  - name: Start service filebeat
+    ansible.builtin.service:
+      name: filebeat.service
+      state: started
 
 ...
