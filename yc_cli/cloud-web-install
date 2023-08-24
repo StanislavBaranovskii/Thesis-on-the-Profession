@@ -21,6 +21,8 @@ CPU_CORE=2
 MEMORY_SIZE=1GB
 DISK_SIZE=3 #GB
 
+#Перезаписываем содержимое файла host до [web]
+echo "$(cat ~/Thesis-on-the-Profession/ansible/hosts |awk '/\[web\]/{exit 0}{print $0}')" > ~/Thesis-on-the-Profession/ansible/hosts
 echo [web] >> ~/Thesis-on-the-Profession/ansible/hosts
 VM_INT_IP=$IP_INT_WEB1
 for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME

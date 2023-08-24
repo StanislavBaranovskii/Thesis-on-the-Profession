@@ -53,6 +53,13 @@
       update_cache: yes
       cache_valid_time: 360
 
+  - name: Ansible install
+    ansible.builtin.apt:
+      name: ansible
+      state: present
+      update_cache: yes
+      cache_valid_time: 360
+
   - name: download GO (get_url)
     ansible.builtin.get_url:
       url: https://go.dev/dl/go1.20.7.linux-amd64.tar.gz

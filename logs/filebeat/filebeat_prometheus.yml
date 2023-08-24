@@ -1,14 +1,15 @@
 filebeat.inputs:
-#- type: filestream
-#  id: my-filestream-id
-#  enabled: false
-#  paths:
-#    - /var/log/*.log
 - type: filestream
   id: prometheus-filestream-id
   enabled: true
   paths:
-    - /var/log/prometheus/*.log
+    - /var/log/*.log
+
+#- type: filestream
+#  id: prometheus-filestream-id
+#  enabled: true
+#  paths:
+#    - /var/log/prometheus/*.log
 
 # ============================== Filebeat modules ==============================
 filebeat.config.modules:

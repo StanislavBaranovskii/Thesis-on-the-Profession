@@ -61,7 +61,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-terraform apply
+terraform apply -auto-approve
 if [ $? -ne 0 ]; then
     echo "ОШИБКА выполнения terraform "
     exit 1
@@ -69,20 +69,86 @@ fi
 
 # 2. Поднимаем на ВМ сервисы (ansible)
 
+echo [logs] > ~/Thesis-on-the-Profession/ansible/hosts
+#Ожидаем публикации IP создаваемых ВМ
+echo "Ожидаем публикации IP создаваемых ВМ.."
+for VM_NAME in $LOGS_VM1_NAME $LOGS_VM2_NAME
+do
+    VM_IP=""
+    until [ -n "$VM_IP" ]
+    do
+        VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+        if [ -n "$VM_IP" ]; then
+            echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
+            if [ "$VM_NAME" = "$LOGS_VM1_NAME" ]; then IP_ELASTIC=$VM_IP; fi
+            if [ "$VM_NAME" = "$LOGS_VM2_NAME" ]; then IP_KIBANA=$VM_IP; fi
+        fi
+        sleep 2
+    done
+done
+
+echo [web] >> ~/Thesis-on-the-Profession/ansible/hosts
+#Ожидаем публикации IP создаваемых ВМ
+echo "Ожидаем публикации IP создаваемых ВМ.."
+for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
+do
+    VM_IP=""
+    until [ -n "$VM_IP" ]
+    do
+        VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+        if [ -n "$VM_IP" ]; then
+            echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
+            if [ "$VM_NAME" = "$WEB_VM1_NAME" ]; then IP_WEB1=$VM_IP; fi
+            if [ "$VM_NAME" = "$WEB_VM2_NAME" ]; then IP_WEB2=$VM_IP; fi
+        fi
+        sleep 2
+    done
+done
+
+echo [mons] >> ~/Thesis-on-the-Profession/ansible/hosts
+#Ожидаем публикации IP создаваемых ВМ
+echo "Ожидаем публикации IP создаваемых ВМ.."
+for VM_NAME in $MONS_VM1_NAME $MONS_VM2_NAME
+do
+    VM_IP=""
+    until [ -n "$VM_IP" ]
+    do
+        VM_IP=$(yc compute instance get $VM_NAME |grep -iE "^[ ]{8}address: " |sed 's/address://' |xargs)
+        if [ -n "$VM_IP" ]; then
+            echo "$VM_NAME ansible_host=$VM_IP ansible_connection=ssh ansible_ssh_user=yc-user" >> ~/Thesis-on-the-Profession/ansible/hosts
+            if [ "$VM_NAME" = "$MONS_VM1_NAME" ]; then IP_PROMET=$VM_IP; fi
+            if [ "$VM_NAME" = "$MONS_VM2_NAME" ]; then IP_GRAFAN=$VM_IP; fi
+        fi
+        sleep 2
+    done
+done
+
+yc compute instance list
+
 #Разворачиваем две ВМ: Elasticsearch и Kibana
 echo -e "\n # Разворачиваем ВМ Elasticsearch и Kibana \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-elk-install
+#~/Thesis-on-the-Profession/yc_cli/cloud-elk-install
 #if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+cd ~/Thesis-on-the-Profession/ansible
+ansible-playbook logs.yaml
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения Ansible playbook"; exit 1; fi
 
 #Разворачиваем две ВМ: web сервера
 echo -e "\n # Разворачиваем ВМ web сервера \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-web-install
+#~/Thesis-on-the-Profession/yc_cli/cloud-web-install
 #if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+cd ~/Thesis-on-the-Profession/ansible
+#ansible-playbook web.yaml --extra-vars="name_web1=$WEB_VM1_NAME ip_int_web1=$IP_INT_WEB1 name_web2=$WEB_VM2_NAME ip_int_web2=$IP_INT_WEB2"
+ansible-playbook web.yaml
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения Ansible playbook"; exit 1; fi
 
 #Разворачиваем две ВМ: Prometheus и Grafana
 echo -e "\n # Разворачиваем ВМ Prometheus и Grafana \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-monitoring-install
+#~/Thesis-on-the-Profession/yc_cli/cloud-monitoring-install
 #if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+cd ~/Thesis-on-the-Profession/ansible
+ansible-playbook monitoring.yaml --extra-vars="ip_prom=$VM1_INT_IP"
+if [ $? -ne 0 ]; then echo "ОШИБКА в $0. Ansible playbook ошибка выполнения сценария"; exit 1; fi
 
 # 3. Финишная конфигурация
 
