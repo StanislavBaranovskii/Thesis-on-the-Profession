@@ -4,31 +4,36 @@
 #Скрипт разворачивания облачной инфраструктуры в Yandex Cloud
 #С использованием Terraform
 
+
+LOGS_VM1_NAME=vm-elastic
+LOGS_VM2_NAME=vm-kibana
+INT_IP_ELASTIC=10.128.0.31 #Elasticsearch
+INT_IP_KIBANA=10.128.0.32 #Kibana
+
+WEB_VM1_NAME=vm-web1
+WEB_VM2_NAME=vm-web2
+IP_INT_WEB1=10.128.0.11
+IP_INT_WEB2=10.129.0.11
+
+MONS_VM1_NAME=vm-prometheus
+MONS_VM2_NAME=vm-grafana
+VM1_INT_IP=10.128.0.21 # Prometheus
+VM2_INT_IP=10.128.0.22 # Grafana + Bastion
+
+
 ########################################################################
 #Создание виртуального частного облака (Virtual Private Cloud):
 # - Создание каталога (Folder)
 # - Создание сети (Network) и подсети (Subnet)
+# - Создание ВМ
 ########################################################################
 
-FOLDER_NAME=thesis-on-the-profession
-
-NETWORK_NAME=default
-ZONE_A_NAME=ru-central1-a
-SUBNET_ZA_NAME=$NETWORK_NAME-$ZONE_A_NAME
-RANGE_ZA_IP=10.128.0.0/24
-ZONE_B_NAME=ru-central1-b
-SUBNET_ZB_NAME=$NETWORK_NAME-$ZONE_B_NAME
-RANGE_ZB_IP=10.129.0.0/24
-
-
-
-
-
-
-
-
-
-
+echo "########################################################################
+#Создание виртуального частного облака (Virtual Private Cloud):
+# - Создание каталога (Folder)
+# - Создание сети (Network) и подсети (Subnet)
+# - Создание ВМ
+########################################################################"
 
 #
 export YC_TOKEN=$(yc iam create-token)
@@ -43,7 +48,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 1. Разворачиваем ВМ (terraform)
+# 1. Разворачиваем VPC и виртуальные машины (terraform)
 
 # 1.1. Подготовка
 cp -f ~/Thesis-on-the-Profession/terraform/log-collection/main_log-collection.tf ~/Thesis-on-the-Profession/terraform/
@@ -63,15 +68,27 @@ fi
 
 terraform apply -auto-approve
 if [ $? -ne 0 ]; then
-    echo "ОШИБКА выполнения terraform "
+    echo "ОШИБКА выполнения terraform apply"
     exit 1
 fi
 
+
+########################################################################
+#Создание целевых сервисов внутри виртуальных машин
+########################################################################
+
+echo "########################################################################
+#Создание целевых сервисов внутри виртуальных машин
+########################################################################"
+
 # 2. Поднимаем на ВМ сервисы (ansible)
 
+# 2.1. Заполняем файл инвентаря host
+
+echo "Заполняем файл инвентаря ~/Thesis-on-the-Profession/ansible/hosts"
 echo [logs] > ~/Thesis-on-the-Profession/ansible/hosts
-#Ожидаем публикации IP создаваемых ВМ
-echo "Ожидаем публикации IP создаваемых ВМ.."
+#Ожидаем публикации IP создаваемых ВМ LOGS
+echo "Ожидаем публикации IP создаваемых ВМ: $LOGS_VM1_NAME и $LOGS_VM2_NAME"
 for VM_NAME in $LOGS_VM1_NAME $LOGS_VM2_NAME
 do
     VM_IP=""
@@ -88,8 +105,8 @@ do
 done
 
 echo [web] >> ~/Thesis-on-the-Profession/ansible/hosts
-#Ожидаем публикации IP создаваемых ВМ
-echo "Ожидаем публикации IP создаваемых ВМ.."
+#Ожидаем публикации IP создаваемых ВМ WEB
+echo "Ожидаем публикации IP создаваемых ВМ: $WEB_VM1_NAME и $WEB_VM2_NAME"
 for VM_NAME in $WEB_VM1_NAME $WEB_VM2_NAME
 do
     VM_IP=""
@@ -106,8 +123,8 @@ do
 done
 
 echo [mons] >> ~/Thesis-on-the-Profession/ansible/hosts
-#Ожидаем публикации IP создаваемых ВМ
-echo "Ожидаем публикации IP создаваемых ВМ.."
+#Ожидаем публикации IP создаваемых ВМ MONS
+echo "Ожидаем публикации IP создаваемых ВМ: $MONS_VM1_NAME и $MONS_VM2_NAME"
 for VM_NAME in $MONS_VM1_NAME $MONS_VM2_NAME
 do
     VM_IP=""
@@ -125,211 +142,157 @@ done
 
 yc compute instance list
 
-#Разворачиваем две ВМ: Elasticsearch и Kibana
-echo -e "\n # Разворачиваем ВМ Elasticsearch и Kibana \n"
-#~/Thesis-on-the-Profession/yc_cli/cloud-elk-install
-#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+# 2.2. Редактируем конфиг файлы сервисов
+
+#Перезаписываем конфигурационный файл kibana.yml
+echo "server.port: 5601
+server.host: \"0.0.0.0\"" > ~/Thesis-on-the-Profession/logs/kibana/kibana.yml
+echo "elasticsearch.hosts: [\"http://$INT_IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/kibana/kibana.yml
+echo "server.publicBaseUrl: \"http://$IP_KIBANA:5601/\"
+elasticsearch.username: \"kibana_system\"
+elasticsearch.password: \"Elastic123\"" >> ~/Thesis-on-the-Profession/logs/kibana/kibana.yml
+
+#Перезаписываем конфигурационный файл filebeat.yml (filebeat_grafana.yml, filebeat_kibana.yml, filebeat_prometheus.yml)
+echo "filebeat.inputs:
+#- type: filestream
+#  id: my-filestream-id
+#  enabled: false
+#  paths:
+#    - /var/log/*.log
+- type: filestream
+  id: nginx-filestream-id
+  enabled: true
+  paths:
+    - /var/log/nginx/*.log
+
+# ============================== Filebeat modules ==============================
+filebeat.config.modules:
+  path: \${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+# ======================= Elasticsearch template setting =======================
+setup.template.settings:
+  index.number_of_shards: 1
+
+# ================================= Dashboards =================================
+setup.dashboards.enabled: true
+
+# =================================== Kibana ===================================
+setup.kibana:" > ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
+
+echo "  host: \"http://$INT_IP_KIBANA:5601\"
+" >> ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
+
+echo "# ================================== Outputs ===================================
+
+# ---------------------------- Elasticsearch Output ----------------------------
+output.elasticsearch:" >> ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
+
+echo "  hosts: [\"$INT_IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
+
+echo "  username: \"elastic\"
+  password: \"Elastic123\"
+
+# ================================= Processors =================================
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+
+# ============================= X-Pack Monitoring ==============================
+monitoring.enabled: true
+
+# =============================== HTTP Endpoint ================================
+http.enabled: true
+http.host: localhost
+http.port: 5066
+" >> ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
+
+#Редактируем html файл index.nginx-debian.html
+echo "$(cat ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian.html |awk '/http:\/\/localhost:80\//{exit 0}{print $0}')" > ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web1.html
+cp -f ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web1.html ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web2.html
+
+echo "<p><b><center><a href=\"http://$IP_WEB2:80/\">Switch to another WEB server</a></center></b></p>
+<p><em>#############################################################</em></p>
+
+<p><u>IP Address Nginx Server:</u> <b><font size=\"+2\" color=\"#ff0000\"><!--#echo var=\"SERVER_ADDR\"--></font></b></br>
+<u>Name Nginx Server:</u> <b><font size=\"+2\" color=\"#ff0000\"><!--#echo var=\"HOSTNAME\"--></font></b></p>
+<p><em><center><!--#echo var=\"DATE_LOCAL\"--></center></em></p>
+
+
+</body>
+</html>
+" >> ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web1.html
+
+echo "<p><b><center><a href=\"http://$IP_WEB1:80/\">Switch to another WEB server</a></center></b></p>
+<p><em>#############################################################</em></p>
+
+<p><u>IP Address Nginx Server:</u> <b><font size=\"+2\" color=\"#ff0000\"><!--#echo var=\"SERVER_ADDR\"--></font></b></br>
+<u>Name Nginx Server:</u> <b><font size=\"+2\" color=\"#ff0000\"><!--#echo var=\"HOSTNAME\"--></font></b></p>
+<p><em><center><!--#echo var=\"DATE_LOCAL\"--></center></em></p>
+
+
+</body>
+</html>
+" >> ~/Thesis-on-the-Profession/web/WWW/index.nginx-debian-web2.html
+
+#Перезаписываем конфигурационный файл prometheus.yml
+echo "global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+
+rule_files:
+
+scrape_configs:
+
+  - job_name: \"web1\"
+    scrape_interval: 8s
+    static_configs:
+      - targets: ['$IP_INT_WEB1:9100', '$IP_INT_WEB1:4040']
+
+  - job_name: \"web2\"
+    scrape_interval: 8s
+    static_configs:
+      - targets: ['$IP_INT_WEB2:9100', '$IP_INT_WEB2:4040']
+" > ~/Thesis-on-the-Profession/monitoring/prometheus/prometheus.yml
+
+#Дописываем конфигурационный файл prometheus.yml
+echo "$(cat ~/Thesis-on-the-Profession/monitoring/prometheus/prometheus.yml |awk '/job_name: "prometheus"/{exit 0}{print $0}')" > ~/Thesis-on-the-Profession/monitoring/prometheus/prometheus.yml
+echo "
+  - job_name: \"prometheus\"
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['$VM1_INT_IP:9090', '$VM1_INT_IP:9100']" >> ~/Thesis-on-the-Profession/monitoring/prometheus/prometheus.yml
+
+# 2.3. Поднимаем сервисы
+
 cd ~/Thesis-on-the-Profession/ansible
+
+# 2.3.1. Elasticsearch и Kibana
+echo -e "\n # Разворачиваем сервисы: Elasticsearch и Kibana \n"
+
 ansible-playbook logs.yaml
 if [ $? -ne 0 ]; then echo "ОШИБКА выполнения Ansible playbook"; exit 1; fi
 
-#Разворачиваем две ВМ: web сервера
-echo -e "\n # Разворачиваем ВМ web сервера \n"
-#~/Thesis-on-the-Profession/yc_cli/cloud-web-install
-#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
-cd ~/Thesis-on-the-Profession/ansible
+# 2.3.2.  web сервера
+echo -e "\n # Разворачиваем сервисы: web-сервера \n"
+
 #ansible-playbook web.yaml --extra-vars="name_web1=$WEB_VM1_NAME ip_int_web1=$IP_INT_WEB1 name_web2=$WEB_VM2_NAME ip_int_web2=$IP_INT_WEB2"
 ansible-playbook web.yaml
 if [ $? -ne 0 ]; then echo "ОШИБКА выполнения Ansible playbook"; exit 1; fi
 
-#Разворачиваем две ВМ: Prometheus и Grafana
-echo -e "\n # Разворачиваем ВМ Prometheus и Grafana \n"
-#~/Thesis-on-the-Profession/yc_cli/cloud-monitoring-install
-#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
-cd ~/Thesis-on-the-Profession/ansible
+# 2.3.3. Prometheus и Grafana
+echo -e "\n # Разворачиваем сервисы: Prometheus и Grafana \n"
+
 ansible-playbook monitoring.yaml --extra-vars="ip_prom=$VM1_INT_IP"
-if [ $? -ne 0 ]; then echo "ОШИБКА в $0. Ansible playbook ошибка выполнения сценария"; exit 1; fi
-
-# 3. Финишная конфигурация
-
-# 3.1. Подготовка
-cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/yc-sg.tf ~/Thesis-on-the-Profession/terraform/
-cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_log-collection.tf ~/Thesis-on-the-Profession/terraform/
-cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_website.tf ~/Thesis-on-the-Profession/terraform/
-cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_monitoring.tf ~/Thesis-on-the-Profession/terraform/
-cp -f ~/Thesis-on-the-Profession/terraform/yc-application-load-balancer/alb.tf ~/Thesis-on-the-Profession/terraform/
-cp -f ~/Thesis-on-the-Profession/terraform/yc-snapshots/yc_snapshot_schedule.tf ~/Thesis-on-the-Profession/terraform/
-
-# 1.2. Разворачивание
-terraform plan
-if [ $? -ne 0 ]; then
-    echo "ОШИБКА выполнения terraform plan"
-    exit 1
-fi
-
-terraform apply
-if [ $? -ne 0 ]; then
-    echo "ОШИБКА выполнения terraform "
-    exit 1
-fi
-
-
-########################################################################
-#Облачная инфраструктура развернута.
-#Печатаем список созданных ресурсов.
-########################################################################
-
-echo "########################################################################
-#Облачная инфраструктура развернута.
-#Печатаем список созданных ресурсов.
-########################################################################"
-
-
-echo -e "\n # Текущий каталог : $CURRENT_FOLDER_NAME \n"
-echo " # Список сетей в каталоге $CURRENT_FOLDER_NAME :"
-yc vpc network list
-echo " # Список подсетей в каталоге $CURRENT_FOLDER_NAME (сеть: $NETWORK_NAME) :"
-yc vpc subnet list
-
-echo " # Список созданных ВМ :"
-yc compute instance list
-
-PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -iE "^[ ]{14}address: " |awk '{print $ 2}')
-echo -e " #\n # Публичный IP адрес балансера alb : $PUB_IP_ALB \n #\n"
-
-echo "Список созданных групп безопасности :"
-yc vpc security-group get
-
-echo "Список расписаний создания снимков дисков :"
-yc compute snapshot-schedule list
-
-
-
-
-
-
-
-
-
-
-
-
-
-echo "########################################################################
-#Создание виртуального частного облака (Virtual Private Cloud):
-# - Создание каталога (Folder)
-# - Создание сети (Network) и подсети (Subnet)
-########################################################################"
-
-#Проверяем наличие облака
-yc resource-manager cloud list &>/dev/null
-if [ $? -ne 0 ]; then
-    echo "Не найдено ни одного облака или нет интерйфейса командной строки Yandex Cloud"
-    exit 1
-else
-    echo "Найдено как минимум одно облако"
-fi
-echo -e "\nТекущее облако : $(yc resource-manager cloud get --id $(yc config get cloud-id) |grep -E "^name: "  |awk '{print $ 2}')\n"
-#Проверяем / создаем каталог проекта (VPC)
-
-#yc resource-manager folder list |grep "$FOLDER_NAME"
-yc resource-manager folder get --name $FOLDER_NAME &>/dev/null
-if [ $? -ne 0 ]; then
-    echo "Каталог $FOLDER_NAME проекта в текущем облаке не найден. Создаем..."
-    yc resource-manager folder create --name $FOLDER_NAME --description "Проект дипломной работы" &>/dev/null
-    if [ $? -ne 0 ]; then
-        echo "ОШИБКА! Каталог $FOLDER_NAME проекта не создан"
-        exit 1
-    else
-        echo "Каталог $FOLDER_NAME проекта создан"
-    fi
-else
-    echo "Каталог $FOLDER_NAME проекта уже существует"
-fi
-
-#Назначаем созданный каталог в YC CLI текущим
-echo "Назначаем каталог $FOLDER_NAME в YC CLI текущим"
-yc config set folder-name $FOLDER_NAME
-if [ $? -ne 0 ]; then
-    echo "ОШИБКА! Каталог $FOLDER_NAME в настройках YC CLI текущим не выбран"
-    exit 1
-fi
-
-#Проверяем / создаем сеть и две подсети (VPC)
-
-yc vpc network get $NETWORK_NAME &>/dev/null
-if [ $? -ne 0 ]; then
-    echo "Сеть $NETWORK_NAME в каталоге $FOLDER_NAME не найдена. Создаем..."
-    yc vpc network create --name $NETWORK_NAME --description "Сеть дипломной работы" &>/dev/null
-    #yc vpc network create --folder-name $FOLDER_NAME --name $NETWORK_NAME --description "Сеть дипломной работы" &>/dev/null
-    if [ $? -ne 0 ]; then
-        echo "ОШИБКА! Сеть $NETWORK_NAME в каталоге $FOLDER_NAME не создан"
-        exit 1
-    else
-        echo "Сеть $NETWORK_NAME в каталоге $FOLDER_NAME создан"
-    fi
-else
-    echo "Сеть $NETWORK_NAME в каталоге $FOLDER_NAME уже существует"
-fi
-
-ZONE_NAME=$ZONE_A_NAME
-RANGE_IP=$RANGE_ZA_IP
-for SUBNET_NAME in $SUBNET_ZA_NAME $SUBNET_ZB_NAME
-do
-    yc vpc subnet get $SUBNET_NAME &>/dev/null
-    if [ $? -ne 0 ]; then
-        echo "Подсеть $SUBNET_NAME не найдена. Создаем..."
-        yc vpc subnet create --name $SUBNET_NAME --zone $ZONE_NAME --network-name $NETWORK_NAME --range $RANGE_IP &>/dev/null
-        #yc vpc subnet create --folder-name $FOLDER_NAME --name $SUBNET_NAME --description "Подсеть зоны А" --zone $ZONE_NAME --network-name $NETWORK_NAME --range $RANGE_IP &>/dev/null
-        if [ $? -ne 0 ]; then
-            echo "ОШИБКА! Подсеть $SUBNET_NAME не создана"
-            exit 1
-        else
-            echo "Подсеть $SUBNET_NAME создана"
-        fi
-    else
-        echo "Подсеть $SUBNET_NAME уже существует"
-    fi
-    ZONE_NAME=$ZONE_B_NAME
-    RANGE_IP=$RANGE_ZB_IP
-done
-
-CURRENT_FOLDER_NAME=$(yc config get folder-name)
-echo -e "\n # Текущий каталог : $CURRENT_FOLDER_NAME \n"
-echo " # Список сетей в каталоге $CURRENT_FOLDER_NAME :"
-yc vpc network list
-echo " # Список подсетей в каталоге $CURRENT_FOLDER_NAME (сеть: $NETWORK_NAME) :"
-yc vpc subnet list
-
-
-########################################################################
-#Создание ВМ и целевых сервисов внутри ВМ
-########################################################################
-
-echo "########################################################################
-#Создание ВМ и целевых сервисов внутри ВМ
-########################################################################"
-
-#Проверяем / создаем пару ssh ключей
-if [ ! -f ~/.ssh/id_ed25519.pub ]; then
-    echo "ssh-key файл ~/.ssh/id_ed25519.pub не найден. Создаём.."
-    ssh-keygen -t ed25519
-fi
-
-#Разворачиваем две ВМ: Elasticsearch и Kibana
-echo -e "\n # Разворачиваем ВМ Elasticsearch и Kibana \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-elk-install
-#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
-
-#Разворачиваем две ВМ: web сервера
-echo -e "\n # Разворачиваем ВМ web сервера \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-web-install
-#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
-
-#Разворачиваем две ВМ: Prometheus и Grafana
-echo -e "\n # Разворачиваем ВМ Prometheus и Grafana \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-monitoring-install
-#if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+if [ $? -ne 0 ]; then echo "ОШИБКА выполнения Ansible playbook"; exit 1; fi
 
 
 ########################################################################
@@ -348,25 +311,61 @@ echo "########################################################################
 # - Планировщик создания снимков дисков ВМ
 ########################################################################"
 
-#Создаем группы безопасности
-echo -e "\n # Создаём группы безопасности \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-sg-create
-if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+# 3. Финишная конфигурация
 
-#Освобождаем неиспользуемые публичные IP адреса
-echo -e "\n # Освобождаем неиспользуемых публичные IP адреса \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-remove-one-to-one-nat
-if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+# 3.1. Подготовка
 
-#Планировщик создания снимков дисков ВМ
-echo -e "\n # Планировщик создания снимков дисков ВМ \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-snapshot-shed-create
-if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/yc_sg.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_log-collection.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_website.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_monitoring.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-application-load-balancer/alb.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-snapshots/yc_snapshot_schedule.tf ~/Thesis-on-the-Profession/terraform/
 
-#Создаём L7-балансировщик
-echo -e "\n # Создаём L7-балансировщик \n"
-~/Thesis-on-the-Profession/yc_cli/cloud-alb-create
-if [ $? -ne 0 ]; then echo "ОШИБКА выполнения скрипта $0."; exit 1; fi
+#Почему то сбрасывает значения переменных. Запускаем повторно
+export YC_TOKEN=$(yc iam create-token)
+export YC_CLOUD_ID=$(yc config get cloud-id)
+export YC_FOLDER_ID=$(yc config get folder-id)
+
+# 3.2. Разворачивание
+terraform plan
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА выполнения terraform plan"
+    exit 1
+fi
+
+terraform apply -auto-approve
+if [ $? -ne 0 ]; then
+    echo "ОШИБКА выполнения terraform apply"
+    exit 1
+fi
 
 
+########################################################################
+#Облачная инфраструктура развернута.
+#Печатаем список созданных ресурсов.
+########################################################################
+
+echo "########################################################################
+#Облачная инфраструктура развернута.
+#Печатаем список созданных ресурсов.
+########################################################################"
+
+
+echo -e "\n # Список сетей :"
+yc vpc network list
+echo " # Список подсетей :"
+yc vpc subnet list
+
+echo " # Список созданных ВМ :"
+yc compute instance list
+
+PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -iE "^[ ]{14}address: " |awk '{print $ 2}')
+echo -e " #\n # Публичный IP адрес балансера alb : $PUB_IP_ALB \n #\n"
+
+echo "Список созданных групп безопасности :"
+yc vpc security-group get
+
+echo "Список расписаний создания снимков дисков :"
+yc compute snapshot-schedule list
 

@@ -50,14 +50,21 @@
     ansible.builtin.apt:
       name: curl
       state: present
-      update_cache: yes
+      #update_cache: yes
       cache_valid_time: 360
 
   - name: Ansible install
     ansible.builtin.apt:
       name: ansible
       state: present
-      update_cache: yes
+      #update_cache: yes
+      cache_valid_time: 360
+
+  - name: Sqlite3 install
+    ansible.builtin.apt:
+      name: sqlite3
+      state: present
+      #update_cache: yes
       cache_valid_time: 360
 
   - name: download GO (get_url)
@@ -113,6 +120,12 @@
       src: ~/.ssh/id_ed25519.pub
       dest: ~/.ssh/id_ed25519.pub
       mode: '0644'
+
+  - name: push id_ed25519 (copy)
+    ansible.builtin.copy:
+      src: ~/.ssh/id_ed25519
+      dest: ~/.ssh/id_ed25519
+      mode: '0600'
 
   - name: yc cli install (shell)
     ansible.builtin.shell: curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -a

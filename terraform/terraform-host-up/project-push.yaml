@@ -5,9 +5,9 @@
   gather_facts: false
   tasks:
   - name: create arhive project tar.gz
-    ansible.builtin.shell: tar -czf ~/project.tar.gz terraform/*
+    ansible.builtin.shell: tar -czf ~/project.tar.gz Thesis-on-the-Profession/*
     args:
-      chdir: ~/Thesis-on-the-Profession/
+      chdir: ~/
 
 - name: Terraform-Host-Up
   hosts: vm-terraform

@@ -26,7 +26,7 @@ DISK_SIZE=8 #GB
 
 echo [logs] > ~/Thesis-on-the-Profession/ansible/hosts
 
-VM_INT_IP=$INT_IP_ELASTIC
+VM_INT_IP=$INT_IP_ELASTICee
 for VM_NAME in $LOGS_VM1_NAME $LOGS_VM2_NAME
 do
     yc compute instance get $VM_NAME &>/dev/null
@@ -65,11 +65,11 @@ yc compute instance list
 #scp ~/packages/kibana-7.17.11-amd64.deb yc-user@$IP_KIBANA:/tmp/
 
 echo "server.port: 5601
-server.host: \"0.0.0.0\"" > ~/Thesis-on-the-Profession/logs/kibana.yml
-echo "elasticsearch.hosts: [\"http://$INT_IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/kibana.yml
+server.host: \"0.0.0.0\"" > ~/Thesis-on-the-Profession/logs/kibana/kibana.yml
+echo "elasticsearch.hosts: [\"http://$INT_IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/kibana/kibana.yml
 echo "server.publicBaseUrl: \"http://$IP_KIBANA:5601/\"
 elasticsearch.username: \"kibana_system\"
-elasticsearch.password: \"Elastic123\"" >> ~/Thesis-on-the-Profession/logs/kibana.yml
+elasticsearch.password: \"Elastic123\"" >> ~/Thesis-on-the-Profession/logs/kibana/kibana.yml
 
 
 echo "filebeat.inputs:
@@ -97,17 +97,17 @@ setup.template.settings:
 setup.dashboards.enabled: true
 
 # =================================== Kibana ===================================
-setup.kibana:" > ~/Thesis-on-the-Profession/logs/filebeat.yml
+setup.kibana:" > ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
 
 echo "  host: \"http://$INT_IP_KIBANA:5601\"
-" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
+" >> ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
 
 echo "# ================================== Outputs ===================================
 
 # ---------------------------- Elasticsearch Output ----------------------------
-output.elasticsearch:" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
+output.elasticsearch:" >> ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
 
-echo "  hosts: [\"$INT_IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
+echo "  hosts: [\"$INT_IP_ELASTIC:9200\"]" >> ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
 
 echo "  username: \"elastic\"
   password: \"Elastic123\"
@@ -127,7 +127,7 @@ monitoring.enabled: true
 http.enabled: true
 http.host: localhost
 http.port: 5066
-" >> ~/Thesis-on-the-Profession/logs/filebeat.yml
+" >> ~/Thesis-on-the-Profession/logs/filebeat/filebeat.yml
 
 
 #sleep 1s

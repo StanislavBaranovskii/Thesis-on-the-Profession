@@ -1,5 +1,7 @@
-resource "yandex_resourcemanager_folder" "folder1" {
-  cloud_id    = "b1g5d1h1bstlaq9so8fs"
+resource "yandex_resourcemanager_cloud" "my_cloud" {}
+
+resource "yandex_resourcemanager_folder" "my_folder" {
+  cloud_id    = "yandex_resourcemanager_cloud.my_cloud.id"
   name        = "thesis-on-the-profession"
   description = "Проект дипломной работы"
 }

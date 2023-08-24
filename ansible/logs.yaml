@@ -81,6 +81,7 @@
       state: started
 
   - name: Generic question with multiple different responses
+    ignore_errors: true
     ansible.builtin.expect:
       chdir: /usr/share/elasticsearch/bin/
       echo: true

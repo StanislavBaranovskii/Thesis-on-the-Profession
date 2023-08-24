@@ -1,6 +1,0 @@
-server.port: 5601
-server.host: "0.0.0.0"
-elasticsearch.hosts: ["http://10.128.0.31:9200"]
-server.publicBaseUrl: "http://51.250.88.115:5601/"
-elasticsearch.username: "kibana_system"
-elasticsearch.password: "Elastic123"

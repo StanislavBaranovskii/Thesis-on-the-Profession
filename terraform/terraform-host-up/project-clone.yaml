@@ -1,0 +1,30 @@
+---
+- name: Terraform-Host-Up
+  hosts: vm-terraform
+#  become: true
+  gather_facts: false
+  
+  pre_tasks:
+  
+  - name: Wait for target connection to become reachable/usable
+    ansible.builtin.wait_for_connection:
+      delay: 5
+      sleep: 2
+      timeout: 30
+
+  - name: Wait for port 22 to become open on the hosts
+    ansible.builtin.wait_for:
+      port: 22
+      delay: 5
+      connect_timeout: 20
+
+  - name: Gather facts
+    ansible.builtin.setup:
+  
+  tasks:
+  - name: create arhive project tar.gz
+    ansible.builtin.shell: tar -czf ~/project.tar.gz Thesis-on-the-Profession/*
+    args:
+      chdir: ~/
+
+...

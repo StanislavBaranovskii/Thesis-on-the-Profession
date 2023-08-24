@@ -167,23 +167,6 @@ yc vpc address get --id e9bv98v53akur71255t6
 https://cloud.yandex.ru/docs/getting-started/individuals/configure-network
 
 
-yc iam service-account --help #управление сервисным аккаунтом
-yc iam service-account list
-yc iam service-account create sa-terraform --async --description "Для развертывания инфраструктуры с помощью Terraform"
-yc iam service-account list
-yc iam service-account delete sa-terraform
-
-роли
-yc iam role list
-yc iam user-account get baranovsky.stanis@yandex.ru #Узнаём ID аккаунта
-yc iam service-account get sa-terraform #Узнаём ID аккаунта
-
-yc resource-manager folder add-access-binding <ID folder> \
-  --role editor \
-  --subject userAccount: <ID аккаунта>
-
-yc resource-manager folder add-access-binding b1gffumnvmraa0eon2o3   --role editor   --subject serviceAccount:aje76icm2mqfijvu0c5s
-
 
 #################################################################################
 # Отвязываем от ВМ публичный IP-адрес
@@ -200,6 +183,26 @@ yc vpc security-group create \
 
 
 ##################################
+#Сервисный аккаунт
+
+yc iam service-account --help #управление сервисным аккаунтом
+yc iam service-account list
+yc iam service-account create sa-terraform --async --description "Для развертывания инфраструктуры с помощью Terraform"
+yc iam service-account list
+yc iam service-account delete sa-terraform
+
+роли
+yc iam role list
+yc iam user-account get baranovsky.stanis@yandex.ru #Узнаём ID аккаунта
+yc iam service-account get sa-terraform #Узнаём ID аккаунта
+
+yc resource-manager folder add-access-binding <ID folder> \
+  --role editor \
+  --subject userAccount: <ID аккаунта>
+
+yc resource-manager folder remove-access-binding --id b1gadaampg6bbldf60up   --role admin   --subject serviceAccount:aje4d4ojr7nccjdudimj
+yc resource-manager folder add-access-binding b1gffumnvmraa0eon2o3   --role editor   --subject serviceAccount:aje76icm2mqfijvu0c5s
+yc resource-manager folder add-access-binding --id b1gadaampg6bbldf60up   --role alb.editor   --subject serviceAccount:aje4d4ojr7nccjdudimj
 
 yc iam key create --service-account-name sa-terraform --output key.json
 
