@@ -201,8 +201,8 @@ L7 балансировщик создается вызовом bash скрип�
 
 Пример нагрузки ВМ группы web серверов (через публичный IP адрес L7 балансировщика):
 ```bash
-for ((i = 1; i <= 10; i++)); do curl -XGET '130.193.37.98:80'; done
-for ((i = 1; i <= 10; i++)); do curl -XGET '130.193.37.98:80/fakepath'; done
+for ((i = 1; i <= 10; i++)); do curl -XGET '51.250.98.136:80'; done
+for ((i = 1; i <= 10; i++)); do curl -XGET '51.250.98.136:80/fakepath'; done
 ```
 
 **Листинг команд с использованием Terraform:**
@@ -211,11 +211,12 @@ for ((i = 1; i <= 10; i++)); do curl -XGET '130.193.37.98:80/fakepath'; done
 #Создаем два идентичных web сервера
 ###########################
 
-#Создаём ВМ vm_web1
-yc compute instance create --name vm-web1 --zone ru-central1-a --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4,address=10.128.0.11 --memory 1GB  --cores 2  --core-fraction 20 --hostname debian-vm-web1 --preemptible --create-boot-disk image-folder-id=standard-images,size=3,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
-
-#Создаём ВМ vm_web2
-yc compute instance create --name vm-web1 --zone ru-central1-b --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4,address=10.129.0.11 --memory 1GB  --cores 2  --core-fraction 20 --hostname debian-vm-web1 --preemptible --create-boot-disk image-folder-id=standard-images,size=3,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+#Создаём ВМ: vm_web1 и vm_web1
+cp -f ~/Thesis-on-the-Profession/terraform/website/main_website.tf ~/Thesis-on-the-Profession/terraform/
+cd ~/Thesis-on-the-Profession/terraform/
+terraform init
+terraform plan
+terraform apply -auto-approve
 
 #Запускаем плейбук развертывания web серверов
 cd ~/Thesis-on-the-Profession/ansible
@@ -226,41 +227,21 @@ ansible-playbook web.yaml
 ###########################
 
 #Создаём целевую группу (TG)
-yc alb target-group create project-web-target-group --description="ALB:Целевая группа" \
---target subnet-name=default-ru-central1-a,ip-address=10.128.0.11 \
---target subnet-name=default-ru-central1-b,ip-address=10.129.0.11
-
 #Создаём группу бэкендов (BG)
-yc alb backend-group create project-web-backend-group --description="ALB:Группа бэкендов"
-
-#Добавляем бэкенд в группу бэкендов (B)
-#(только указываем ID целевой группы, по имени группы не не добавляет)
-yc alb backend-group add-http-backend --backend-group-name project-web-backend-group --name project-backend --weight 1 --port 80 \
---target-group-id=$(yc alb target-group get project-web-target-group |grep -e "^id: " |awk '{print $ 2}') \
---panic-threshold 90 \
---http-healthcheck port=80,healthy-threshold=10,unhealthy-threshold=15,timeout=10s,interval=2s,path=/
-
+# - добавляем бэкенд в группу бэкендов (B)
 #Создаём HTTP-роутер (router)
-yc alb http-router create project-http-router --description "ALB:HTTP роутер"
-
-#Создаём виртуальный хост (VH)
-yc alb virtual-host create project-vhost --http-router-name project-http-router
-
-#Создаём маршрут (route)
-yc alb virtual-host append-http-route project-route \
---http-router-name project-http-router \
---virtual-host-name project-vhost --prefix-path-match / \
---backend-group-name project-web-backend-group
-
+# - создаём виртуальный хост (VH)
+# - создаём маршрут (route)
 #Создаём L7 балансировщик (ALB)
-yc alb load-balancer create project-alb --description ALB --network-name default \
---location subnet-name=default-ru-central1-a,zone=ru-central1-a  \
---location subnet-name=default-ru-central1-b,zone=ru-central1-b
+# - добавляем обработчик в балансировщик (listener)
 
-#Добавляем обработчик в балансировщик (listener)
-yc alb load-balancer add-listener --name project-alb --listener-name alb-listener --external-ipv4-endpoint port=80 --http-router-name project-http-router
+cp -f ~/Thesis-on-the-Profession/terraform/yc-application-load-balancer/alb.tf ~/Thesis-on-the-Profession/terraform/
+terraform plan
+terraform apply -auto-approve
 ```
-С содержимом файлов bash скрипта **[cloud-web-install](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-web-install)**, **[cloud-alb-create](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-alb-create)** и файла YAML сценария **[web.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/web.yaml)** можно ознакомится подробно.
+С содержимом файлов сценариев terraform **[main_website.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/website/main_website.tf)**, **[alb.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-application-load-balancer/alb.tf)** и файла YAML сценария **[web.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/web.yaml)** можно ознакомится подробно.
+
+Скриншот страницы сайта
 
 ---
 
@@ -336,18 +317,21 @@ sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "select url fro
 #Создаем ВМ Prometheus и ВМ Grafana
 ###########################
 
-#Создаём ВМ vm-prometheus
-yc compute instance create --name vm-prometheus --zone ru-central1-a --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4,address=10.128.0.21 --memory 2GB  --cores 2  --core-fraction 20 --hostname debian-vm-prometheus --preemptible --create-boot-disk image-folder-id=standard-images,size=6,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
-
-#Создаём ВМ vm-grafana
-yc compute instance create --name vm-grafana --zone ru-central1-a --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4,address=10.128.0.22 --memory 2GB  --cores 2  --core-fraction 20 --hostname debian-vm-grafana --preemptible --create-boot-disk image-folder-id=standard-images,size=6,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+#Создаём ВМ 
+cp -f ~/Thesis-on-the-Profession/terraform/monitoring/main_monitoring.tf ~/Thesis-on-the-Profession/terraform/
+cd ~/Thesis-on-the-Profession/terraform/
+terraform init
+terraform plan
+terraform apply -auto-approve
 
 #Запускаем плейбук развертывания Prometheus и Grafana
 cd ~/Thesis-on-the-Profession/ansible
 ansible-playbook monitoring.yaml --extra-vars="ip_prom=10.128.0.21"
 
 ```
-С содержимом файла bash скрипта **[cloud-monitoring-install](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-monitoring-install)** и файла YAML сценария **[monitoring.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/monitoring.yaml)** можно ознакомится подробно.
+С содержимом файла сценария terraform **[main_monitoring.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/monitoring/main_monitoring.tf** и файла YAML сценария **[monitoring.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/monitoring.yaml)** можно ознакомится подробно.
+
+Скриншоты интерфейса Grafana 
 
 ---
 

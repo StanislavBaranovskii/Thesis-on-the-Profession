@@ -198,7 +198,7 @@ PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -iE "^[ ]{14}address: " 
 echo -e " #\n # Публичный IP адрес балансера alb : $PUB_IP_ALB \n #\n"
 
 echo "Список созданных групп безопасности :"
-yc vpc security-group get
+yc vpc security-group list
 
 echo "Список расписаний создания снимков дисков :"
 yc compute snapshot-schedule list

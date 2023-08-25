@@ -328,6 +328,7 @@ export YC_CLOUD_ID=$(yc config get cloud-id)
 export YC_FOLDER_ID=$(yc config get folder-id)
 
 # 3.2. Разворачивание
+cd ~/Thesis-on-the-Profession/terraform
 terraform plan
 if [ $? -ne 0 ]; then
     echo "ОШИБКА выполнения terraform plan"
@@ -364,7 +365,7 @@ PUB_IP_ALB=$(yc alb load-balancer get project-alb |grep -iE "^[ ]{14}address: " 
 echo -e " #\n # Публичный IP адрес балансера alb : $PUB_IP_ALB \n #\n"
 
 echo "Список созданных групп безопасности :"
-yc vpc security-group get
+yc vpc security-group list
 
 echo "Список расписаний создания снимков дисков :"
 yc compute snapshot-schedule list
