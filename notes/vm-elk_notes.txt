@@ -29,10 +29,15 @@ curl -s -I http://kibana_IP:5601 | grep -q 'HTTP/1.1 302 Found'
 
 
 
-curl -X GET "localhost:9200/_cat/nodes?v=true&pretty"
-
-
+curl -u elastic -X GET "localhost:9200/_cat/nodes?v=true&pretty"
+curl -u elastic -XGET 'localhost:9200/_cat/indices?v'
+curl -u 'elastic' http://localhost:9200/_aliases
 
 
 
 shasum -a 256 elasticsearch-7.17.11-amd64.deb
+
+
+
+Смотрим трафика на ВМ elasticsearch: 
+sudo tcpdump -i ens8 -s 1500 port 9200

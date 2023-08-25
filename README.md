@@ -148,7 +148,7 @@ export YC_FOLDER_ID=$(yc config get folder-id)
 
 6. Каталог `terraform`
 
-Каталог `terraform` содержит файлы TF сценариев развертывания инфраструктуры в облаке с использованием terraform.
+Каталог `terraform` содержит файлы TF сценариев развертывания инфраструктуры в облаке с использованием terraform. Данный каталог является рабочим (корневым) для выполнения terraform.
 
 7. Каталог `web`
 
@@ -197,8 +197,8 @@ export YC_FOLDER_ID=$(yc config get folder-id)
 
 Пример нагрузки ВМ группы web серверов (через публичный IP адрес L7 балансировщика):
 ```bash
-for ((i = 1; i <= 10; i++)); do curl -XGET '51.250.98.136:80'; done
-for ((i = 1; i <= 10; i++)); do curl -XGET '51.250.98.136:80/fakepath'; done
+for ((i = 1; i <= 10; i++)); do curl -XGET '51.250.98.136:80'; sleep 1; done
+for ((i = 1; i <= 10; i++)); do curl -XGET '51.250.98.136:80/fakepath'; sleep 1; done
 ```
 
 **Листинг команд с использованием Terraform:**
@@ -239,9 +239,13 @@ terraform apply -auto-approve
 
 **Скриншот страницы сайта ( http://51.250.98.136:80/ )**
 
-Страница web-сайта Nginx / L7 балансировщик
+Страница web-сайта Nginx (L7 балансировщик):
 
 ![Страница web-сайта Nginx / L7 балансировщик](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/web-site.png "Страница web-сайта Nginx / L7 балансировщик")
+
+IP адреса созданных ВМ и балансировщика:
+
+![IP адреса созданных ВМ и балансировщика](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/compute-instance-and-alb-list.png "IP адреса созданных ВМ и балансировщика")
 
 ---
 
@@ -300,7 +304,7 @@ sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "select url fro
 После прохождения этапа авторизации для открытия предварительно настроенной панели (dashboard) `My Node Exporter` отображения метрик необходимо в GUI пройти по следующим пунктам меню:
 "Toggle Menu" (пиктограмма в виде трёх горизонтальных черточек) --> "Dashboards" --> "General" --> "My Node Exporter"
 
-Так же на ВМ Gafana реализована концепция Bastion Host: `ssh <Внешний-IP-ВМ-Grafana>:22` .
+Так же на ВМ Gafana реализована концепция Bastion Host: `ssh <Внешний-IP-ВМ-Grafana>:22` (см. раздел [Сеть](#Сeть)).
 
 При установке и конфигурировании Grafana руководствовался следующими официальными источниками:
 - [Порядок установки grafana, edition:oss, version:9.5.6](https://grafana.com/grafana/download/9.5.6?edition=oss)
@@ -329,9 +333,15 @@ ansible-playbook monitoring.yaml --extra-vars="ip_prom=10.128.0.21"
 ```
 С содержимом файла сценария terraform **[main_monitoring.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/monitoring/main_monitoring.tf)** и файла YAML сценария **[monitoring.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/monitoring.yaml)** можно ознакомится подробно.
 
-**Скриншоты интерфейса Grafana ( http://51.250.74.96:3000/ )**
+**Скриншоты интерфейса Grafana ( http://158.160.119.57:3000/ )**
 
+Дашбоард с метриками от web-сервера vm-web1 (IP 10.128.0.11)
 
+![Метрики от web-сервера vm-web1 (IP 10.128.0.21)](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/grafana-web.png "Метрики от web-сервера vm-web1 (IP 10.128.0.21)")
+
+Дашбоард с метриками от Prometheus vm-prometheus (IP 10.128.0.21)
+
+![Метрики от Prometheus vm-prometheus (IP 10.128.0.21)](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/grafana-prometheus.png "Метрики от Prometheus vm-prometheus (IP 10.128.0.21)")
 
 ---
 
@@ -392,11 +402,11 @@ ansible-playbook logs.yaml
 
 С содержимом файла сценария terraform **[main_log-collection.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/log-collection/main_log-collection.tf)** и файла YAML сценария **[logs.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/logs.yaml)** можно ознакомится подробно.
 
-**Скриншоты интерфейса Kibana ( http://158.160.57.84:5601/ )**
+**Скриншоты интерфейса Kibana ( http://158.160.104.167:5601/ )**
 
 Логи от Elasticsearch (IP 10.128.0.31)
 
-![Логи Filebeat от Elasticsearch. IP 10.128.0.31](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/kibana-log-elasticsearch.png "Логи от Elasticsearch (IP 10.128.0.31)")
+![Логи Filebeat от Elasticsearch (IP 10.128.0.31)](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/kibana-log-elasticsearch.png "Логи от Elasticsearch (IP 10.128.0.31)")
 
 Логи от Kiban (IP 10.128.0.32):
 
@@ -416,7 +426,7 @@ ansible-playbook logs.yaml
 
 ---
 
-### Сеть
+### Сeть
 
 **Разворачиваем один VPC**
 
@@ -510,6 +520,20 @@ terraform apply -auto-approve
 - **[main_monitoring.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-security-groups/main_monitoring.tf)**
 - **[main_log-collection.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-security-groups/main_log-collection.tf)**
 
+**Скриншот реализации Bastion Host**
+
+Список групп безопасности:
+
+![Список групп безопасности](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/sg-list.png "Список групп безопасности")
+
+Группа безопасности для Kibana:
+
+![Группа безопасности для kibana](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/sg-kibana.png "Группа безопасности для kibana")
+
+Скриншот реализации Bastion Host:
+
+![Bastion Host ( 51.250.74.96:22 )](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/bastionhost.png "Bastion Host ( 51.250.74.96:22 )")
+
 ---
 
 ### Резервное копирование
@@ -544,5 +568,15 @@ terraform apply -auto-approve
 5. Разморозить ФС - `sudo fsfreeze --unfreeze <точка_монтирования>`.
 [cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/compute/operations/disk-control/create-snapshot)
 Но поскольку сервис Yandex Cloud, при большой нагрузки на сервис, не регламентирует время выполнения создания снимка ([cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/compute/concepts/snapshot-schedule)) то ВМ перед созданием снимка не останавливаем.
+
+**Скриншот созданного расписания**
+
+Скриншот созданного расписания:
+
+![snapshot schedule](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/snapshot-shedule.png "snapshot schedule")
+
+Скриншот созданных по расписанию сников:
+
+![snapshots](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/snapshot-list.png "snapshots")
 
 ---
