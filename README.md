@@ -110,7 +110,7 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 
 В корне каталога проекта располагаются файлы bash скриптов создания, конфигурирования и удаления инфраструктуры в облаке.
 
-`INSTALL-cloud-infrastructure` - основной, стартовый файл скрипта создания облачной инфраструктуру с использованием terraform. Инфраструктура разворачивается от имени сервисной учётной записью с правами editor на каталог. Облако и каталог задаётся через соотвествующие переменны:
+`INSTALL-cloud-infrastructure` - основной, стартовый файл скрипта создания облачной инфраструктуру с использованием terraform и ansible. Инфраструктура разворачивается от имени сервисной учётной записи с правами editor на каталог. Облако и каталог задаётся через соотвествующие переменны:
 ```bash
 export YC_TOKEN=$(yc iam create-token)
 export YC_CLOUD_ID=$(yc config get cloud-id)
@@ -118,7 +118,7 @@ export YC_FOLDER_ID=$(yc config get folder-id)
 ```
 
 Для разворачивания рабочей инфраструктуры проекта достаточно запустить и дождаться завершения выполнения скрипта `INSTALL-cloud-infrastructure`. Вслучае успешного окончания развёртывания инфраструктуры в конце своей работы скрипт распечатает в терминале список созданных облачных ресурсов и способы доступа к ним.
-Необходимым условием запуска скриптов является наличие установленного интерфейса командной строки Yandex Cloud с настроеннам профилем сервисного аккаунта и наличие облака (cloud) и каталога в личном аккаунте сервиса Yandex Cloud.
+Необходимым условием запуска скриптов является наличие установленного интерфейса командной строки Yandex Cloud с настроенным профилем сервисного аккаунта и наличие облака (cloud) и каталога в личном аккаунте сервиса Yandex Cloud.
 
 `INSTALL-cloud-infrastructure-cli` - основной, стартовый файл скрипта создания облачной инфраструктуру с использованием интерфейса команд YC CLI. Инфраструктура проекта поднимается в отдельном новом каталоге (VPC) текущего облака и не затрагивает другую существующую инфраструктуру. Облако задаётся в конфигурировании YC CLI (`yc config --help`). Для разворачивания рабочей инфраструктуры проекта достаточно запустить и дождаться завершения выполнения данного скрипта. Вслучае успешного окончания развёртывания инфраструктуры в конце своей работы скрипт распечатает в терминале список созданных облачных ресурсов и способы доступа к ним.
 Необходимым условием запуска скриптов является наличие установленного интерфейса командной строки Yandex Cloud и наличие хотя бы одно облака (cloud) в личном аккаунте сервиса Yandex Cloud.
@@ -148,7 +148,7 @@ export YC_FOLDER_ID=$(yc config get folder-id)
 
 6. Каталог `terraform`
 
-Каталог `terraform` содержит ...
+Каталог `terraform` содержит файлы TF сценариев развертывания инфраструктуры в облаке с использованием terraform.
 
 7. Каталог `web`
 
@@ -181,10 +181,6 @@ export YC_FOLDER_ID=$(yc config get folder-id)
 - дисковая подсистема - 3 ГБ.
 
 **Порядок развертывания, проверка доступности и работоспособности сервиса**
-
-Развертывание сервисов инициируется запуском на выполнение главного bash скрипта `INSTALL-cloud-infrastructure`.
-Сами web сервера поднимаются вызовом в главном скрипте bash скрипта `cloud-web-install`.
-L7 балансировщик создается вызовом bash скрипта `cloud-alb-create`.
 
 В соответствии со сценарием развёртывания инфрастуктуры ВМ web сайта создаются после создания ВМ с Elasticsearch. Вслучае динамически назначаемых внутренних адресов ВМ новый IP адрес ВМ с Elasticsearch необходимо прописать в конфигурационный файл `filebeat.yml` (секция output.elasticsearch параметр hosts) клиента Filebeats. Процедура создание L7 балансировщика инициализируется только после подъёма всей web серверов из целевой группы.
 
@@ -241,7 +237,11 @@ terraform apply -auto-approve
 ```
 С содержимом файлов сценариев terraform **[main_website.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/website/main_website.tf)**, **[alb.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-application-load-balancer/alb.tf)** и файла YAML сценария **[web.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/web.yaml)** можно ознакомится подробно.
 
-Скриншот страницы сайта
+**Скриншот страницы сайта ( http://51.250.98.136:80/ )**
+
+Страница web-сайта Nginx / L7 балансировщик
+
+![Страница web-сайта Nginx / L7 балансировщик](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/web-site.png "Страница web-сайта Nginx / L7 балансировщик")
 
 ---
 
@@ -281,13 +281,10 @@ Grafana
 
 **Порядок развертывания, проверка доступности и работоспособности сервиса**
 
-Развертывание сервисов инициируется запуском на выполнение главного bash скрипта `INSTALL-cloud-infrastructure`.
-Сами ресурсы Prometheus и Grafana поднимаются вызовом в главном скрипте bash скрипта `cloud-monitoring-install`.
-
 В соответствии со сценарием развёртывания инфрастуктуры ВМ Prometheus и Grafana создаются после создания ВМ web группы. Вслучае динамически назначаемых внутренних адресов ВМ новые IP адреса ВМ web группы, необходимо перечислить в конфигурационный файл `prometheus.yml` (scrape_configs -> job_name -> targets) Prometheus.
 Grafana поднимается после разворачивания Prometheus по той же причине. Вслучае динамически назначаемых внутренних адресов ВМ новый IP адрес ВМ Prometheus необходимо указать при первоначальной настроки подключения Grafana к Prometheus или изменить уже сохраненное подключение в файле базы данных `grafana.db` (таблица data_source -> поле url).
 
-После установки Grafana, останавливаем сервис grafana-server, копируем файл `grafana.db` на ВМ в `/var/lib/grafana/`, запукаем сервис. Файл `grafana.db` уже содержит хеш  установленного пароля для пользователя admin (таблица user), предварительно настроенные пользовательские панели (таблица dashboard) и отредактированные параметры подключения к серверу pometheus (таблица data_source). Параметры подключения к серверу pometheus (IP адрес и порт) редактирую в файле grafana.db с помощью консольной утилиты sqlite3 в Ansible Playbook сценарии `monitoring.yaml` (bash скрипт `cloud-monitoring-install`).
+После установки Grafana, останавливаем сервис grafana-server, копируем файл `grafana.db` на ВМ в `/var/lib/grafana/`, запукаем сервис. Файл `grafana.db` уже содержит хеш  установленного пароля для пользователя admin (таблица user), предварительно настроенные пользовательские панели (таблица dashboard) и отредактированные параметры подключения к серверу pometheus (таблица data_source). Параметры подключения к серверу pometheus (IP адрес и порт) редактирую в файле grafana.db с помощью консольной утилиты sqlite3 в Ansible Playbook сценарии `monitoring.yaml`.
 
 Примеры запросов к файлу базы данных Grafana:
 ```bash
@@ -296,13 +293,14 @@ sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "update data_so
 sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "select url from data_source where name='Prometheus'"
 ``` 
 
-Графический интерфейс (GUI) Gafana доступен по адресу: http://<Внешний-IP-ВМ-Grafana>:3000/ . Внешний (публичный) IP адрес ВМ Gafana будет рапечатан в терминале в конце выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
+Графический интерфейс (GUI) Gafana доступен по адресу: http://<Внешний-IP-ВМ-Grafana>:3000/ .
 Авторизация: `admin` / `Grafana123`.
+
 Пароль для встроенной учетной записи admin меняется при первой авторизации в Grafana и хранится в виде хеша в файле базы данных Grafana `grafana.db` (таблица user). Пароль так же можно изменить в командной строке grafana cli `sudo grafana cli admin reset-admin-password 12345`, но только после первой авторизации в GUI. Попытка поменять пароль учетной записи в терминале сразу после первого запуска службы grafana-server приведёт к ошибке.
 После прохождения этапа авторизации для открытия предварительно настроенной панели (dashboard) `My Node Exporter` отображения метрик необходимо в GUI пройти по следующим пунктам меню:
 "Toggle Menu" (пиктограмма в виде трёх горизонтальных черточек) --> "Dashboards" --> "General" --> "My Node Exporter"
 
-Так же на ВМ Gafana реализована концепция Bastion Host: `ssh <Внешний-IP-ВМ-Grafana>:23` . Внешний (публичный) IP адрес ВМ Gafana будет рапечатан в терминале в конце выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
+Так же на ВМ Gafana реализована концепция Bastion Host: `ssh <Внешний-IP-ВМ-Grafana>:22` .
 
 При установке и конфигурировании Grafana руководствовался следующими официальными источниками:
 - [Порядок установки grafana, edition:oss, version:9.5.6](https://grafana.com/grafana/download/9.5.6?edition=oss)
@@ -311,16 +309,16 @@ sqlite3 ~/Thesis-on-the-Profession/monitoring/grafana/grafana.db "select url fro
 
 При установке и конфигурировании Prometheus так же руководствовался офицальныой документацией [Prometheus - Docs](https://prometheus.io/docs/introduction/overview/) .
 
-**Листинг команд с использованием YC CLI:**
+**Листинг команд с использованием Terraform:**
 ```bash
 ###########################
 #Создаем ВМ Prometheus и ВМ Grafana
 ###########################
 
-#Создаём ВМ 
+#Создаём ВМ: vm-prometheus и vm-grafana
 cp -f ~/Thesis-on-the-Profession/terraform/monitoring/main_monitoring.tf ~/Thesis-on-the-Profession/terraform/
 cd ~/Thesis-on-the-Profession/terraform/
-terraform init
+#terraform init
 terraform plan
 terraform apply -auto-approve
 
@@ -329,9 +327,11 @@ cd ~/Thesis-on-the-Profession/ansible
 ansible-playbook monitoring.yaml --extra-vars="ip_prom=10.128.0.21"
 
 ```
-С содержимом файла сценария terraform **[main_monitoring.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/monitoring/main_monitoring.tf** и файла YAML сценария **[monitoring.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/monitoring.yaml)** можно ознакомится подробно.
+С содержимом файла сценария terraform **[main_monitoring.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/monitoring/main_monitoring.tf)** и файла YAML сценария **[monitoring.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/monitoring.yaml)** можно ознакомится подробно.
 
-Скриншоты интерфейса Grafana 
+**Скриншоты интерфейса Grafana ( http://51.250.74.96:3000/ )**
+
+
 
 ---
 
@@ -361,37 +361,58 @@ ansible-playbook monitoring.yaml --extra-vars="ip_prom=10.128.0.21"
 
 **Порядок развертывания, проверка доступности и работоспособности сервиса**
 
-Развертывание сервисов инициируется запуском на выполнение главного bash скрипта `INSTALL-cloud-infrastructure`.
-Сами ресурсы Elasticsearch и Kibana поднимаются вызовом в главном скрипте bash скрипта `cloud-elk-install`.
+В соответствии со сценарием развёртывания инфрастуктуры ВМ Elasticsearch и Kibana создаются первыми. Вслучае динамически назначаемых внутренних адресов ВМ новый IP адрес ВМ с Elasticsearch необходимо прописать в конфигурационный файл `filebeat.yml` (секция output.elasticsearch параметр hosts) клиентов Filebeats, устанавливаемых на ВМ в облаке.
 
-В соответствии со сценарием развёртывания инфрастуктуры ВМ Elasticsearch и Kibana создаются первыми. Вслучае динамически назначаемых внутренних адресов ВМ новый IP адрес ВМ с Elasticsearch необходимо прописать в конфигурационный файл `filebeat.yml` (секция output.elasticsearch параметр hosts) клиентов Filebeats, устанавливаемых на ВМ группы web.
-
-Графический интерфейс (GUI) Kibana доступен по адресу: http://<Внешний-IP-ВМ-Kibana>:5601/ . Внешний (публичный) IP адрес ВМ Kibana будет рапечатан в терминале в конце выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
+Графический интерфейс (GUI) Kibana доступен по адресу: http://<Внешний-IP-ВМ-Kibana>:5601/ .
 Авторизация: `elastic` / `Elastic123`.
-Пароль для втроенных учетных записей Elasticsearch, включая elastic и kibana_system, меняется в Ansible Playbook сценарии `logs.yaml` (bash скрипт `cloud-elk-install`).
+
+Пароль для втроенных учетных записей Elasticsearch, включая elastic и kibana_system, меняется в Ansible Playbook сценарии `logs.yaml`
 После прохождения этапа авторизации для просмотра логов необходимо в GUI пройти по следующим пунктам меню:
 Пиктограмма в виде трёх горизонтальных черточек --> "Observability" --> "Logs" --> "Stream"
 Для подключения панели отображения логов Nginx необходимо в GUI Kibana выполнить следующее:
 Пиктограмма в виде трёх горизонтальных черточек --> "Analytics" --> "Dashboard" --> в строке поиска набрать и выбрать панель "[Filebeat Nginx] Access and error logs ECS" 
 
-**Листинг команд с использованием YC CLI:**
+**Листинг команд с использованием Terraform:**
 ```bash
 ###########################
 #Создаем ВМ Elasticsearch и ВМ Kibana
 ###########################
 
-#Создаём ВМ vm-elastic
-yc compute instance create --name vm-elastic --zone ru-central1-a --network-interface subnet-name=default-ru-central1-a,nat-ip-version=ipv4,address=10.128.0.31 --memory 4GB  --cores 2  --core-fraction 20 --hostname debian-vm-prometheus --preemptible --create-boot-disk image-folder-id=standard-images,size=8,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
-
-#Создаём ВМ vm-kibana
-yc compute instance create --name vm-kibana --zone ru-central1-a --network-interface subnet-name=default-ru-central1-b,nat-ip-version=ipv4,address=10.128.0.32 --memory 4GB  --cores 2  --core-fraction 20 --hostname debian-vm-grafana --preemptible --create-boot-disk image-folder-id=standard-images,size=8,type=network-hdd,image-family=debian-11 --ssh-key ~/.ssh/id_ed25519.pub --async
+#Создаём ВМ: vm-elastic и vm-kibana
+cp -f ~/Thesis-on-the-Profession/terraform/log-collection/main_log-collection.tf ~/Thesis-on-the-Profession/terraform/
+cd ~/Thesis-on-the-Profession/terraform/
+#terraform init
+terraform plan
+terraform apply -auto-approve
 
 #Запускаем плейбук развертывания Elasticsearch и Kibana
 cd ~/Thesis-on-the-Profession/ansible
 ansible-playbook logs.yaml
 ```
 
-С содержимом файла bash скрипта **[cloud-elk-install](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-elk-install)** и файла YAML сценария **[logs.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/logs.yaml)** можно ознакомится подробно.
+С содержимом файла сценария terraform **[main_log-collection.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/log-collection/main_log-collection.tf)** и файла YAML сценария **[logs.yaml](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/ansible/logs.yaml)** можно ознакомится подробно.
+
+**Скриншоты интерфейса Kibana ( http://158.160.57.84:5601/ )**
+
+Логи от Elasticsearch (IP 10.128.0.31)
+
+![Логи Filebeat от Elasticsearch. IP 10.128.0.31](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/kibana-log-elasticsearch.png "Логи от Elasticsearch (IP 10.128.0.31)")
+
+Логи от Kiban (IP 10.128.0.32):
+
+![Логи Filebeat от Kiban (IP 10.128.0.32)](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/kibana-log-kibana.png "Логи от Kibana (IP 10.128.0.32)")
+
+Логи от Prometheus (IP 10.128.0.21)
+
+![Логи Filebeat от Prometheus (IP 10.128.0.21)](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/kibana-log-prometheus.png "Логи от Prometheus (IP 10.128.0.21)")
+
+Логи от Grafana (IP 10.128.0.22):
+
+![Логи Filebeat от Grafana (IP 10.128.0.22)](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/kibana-log-grafana.png "Логи от Grafana (IP 10.128.0.22)")
+
+Дашбоард логов от web серверов Nginx (IP 10.128.0.11 и 10.129.0.11)
+
+![Дашбоард логов от web серверов Nginx (IP 10.128.0.11 и 10.129.0.11)](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/blob/main/README-data/img/kibana-dashboard.png "Логи от web-серверов (IP 10.128.0.11 и 10.129.0.11)")
 
 ---
 
@@ -403,62 +424,44 @@ Virtual Private Cloud (VPC) - представляет собой отдельн
 
 > Предполагается, что:
 > - интерфейс командной строки Yandex Cloud уже установлен и
-> - в личном аккаунте сервиса Yandex Cloud уже существует хотя бы одно облако (cloud).
+> - в личном аккаунте сервиса Yandex Cloud уже существует хотя бы одно облако (cloud) и каталог (folder) в облаке.
 
-Разворичивание VPC в начале выполнения главного bash скрипта `INSTALL-cloud-infrastructure`.
+Код разворичивания VPC размещён в TF файле `terraform/network_subnet.tf`.
 
-В текущем облаке создаем новый отдельный каталог `thesis-on-the-profession`. В конфигурации командной строки YC CLI устанавливаем созданный каталог `thesis-on-the-profession` по умолчанию. В новом текущем каталоге создаём сеть `default` и в ней две подсети: `default-ru-central1-a` и `default-ru-central1-b`. Имя подсети состоит из префикса - имя сети (network) и суфикса - имя зоны доступности (zone). Размер подсети (range) выбираем с учётом планируемого колличества работающих в данной подсети ВМ (плюс шлюз и плюс DNS). Диапазоны различных подсетей в границах одной сети не должны пересекаться [cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/vpc/concepts/network). Имена сети, подсетей и значения размеров подсетей оставил в значениях, используемх по умолчанию.
-Далее всю облачную инфраструктуру разворачиваем в отдельном каталоге (стартовый bash скрипт `INSTALL-cloud-infrastructure`). По окончании работ удалаем созданную инфраструктуру вместе с каталогом `thesis-on-the-profession` (VPC), не затрагивая другую существующую в облаке инфраструктуру (bash скрипт `REMOVE-cloud-infrastructure`).
+В текущем каталоге создаём сеть `default` и в ней две подсети: `default-ru-central1-a` и `default-ru-central1-b`. Имя подсети состоит из префикса - имя сети (network) и суфикса - имя зоны доступности (zone). Размер подсети (range) выбираем с учётом планируемого колличества работающих в данной подсети ВМ (плюс шлюз и плюс DNS). Диапазоны различных подсетей в границах одной сети не должны пересекаться [cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/vpc/concepts/network). Имена сети, подсетей и значения размеров подсетей оставил в значениях, используемх по умолчанию.
+По окончании работ удаляем созданную инфраструктуру в текущем каталогом, не затрагивая другую существующую в облаке инфраструктуру (bash скрипт `REMOVE-cloud-infrastructure-cli`).
 
-**Листинг команд с использованием YC CLI:**
-```bash
-# создаём новый каталог thesis-on-the-profession
-yc resource-manager folder create --name thesis-on-the-profession --description "Проект дипломной работы"
-
-# устанавливаем каталог thesis-on-the-profession по умолчанию в конфигурации командной строки yc
-yc config set folder-name thesis-on-the-profession
-
-# создаём в текущем каталоге thesis-on-the-profession сеть default
-yc vpc network create --name default --description "Сеть дипломной работы"
-#yc vpc network create --folder-name thesis-on-the-profession --name default --description "Сеть дипломной работы"
-
-# создаём две подсети: default-ru-central1-a и default-ru-central1-b
-yc vpc subnet create --name default-ru-central1-a --description "Подсеть зоны А" --zone ru-central1-a --network-name default --range 10.128.0.0/24
-#yc vpc subnet create --folder-name thesis-on-the-profession --name default-ru-central1-a --description "Подсеть зоны А" --zone ru-central1-a --network-name default --range 10.128.0.0/24
-yc vpc subnet create --name default-ru-central1-b --description "Подсеть зоны B" --zone ru-central1-b --network-name default --range 10.129.0.0/24
-```
-
-С содержимом файлов bash скрипта **[INSTALL-cloud-infrastructure](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/INSTALL-cloud-infrastructure)** и **[REMOVE-cloud-infrastructure](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/REMOVE-cloud-infrastructure)** можно ознакомится подробно.
+С содержимом файла сценария terraform **[network_subnet.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/network_subnet.tf)** можно ознакомится подробно.
 
 **Создание групп безопасности (Security Groups) и реализация концепции Bastion Host**
 
 Группы безопасности действуют по принципу «запрещено все, что не разрешено». Если назначить сетевому интерфейсу ВМ группу безопасности без правил, ВМ не сможет передавать и принимать трафик ([cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/vpc/concepts/security-groups)).
 Если в группе безопасности существует только правило для исходящего трафика, но нет правил для входящего трафика, ответный трафик все равно сможет поступать на ВМ. Если в группе безопасности есть только правила для входящего трафика, ВМ сможет только отвечать на запросы, но не инициировать их ([cloud.yandex.ru/docs](https://cloud.yandex.ru/docs/vpc/concepts/security-groups)).
 
-Группы безопасности создаются при вызовом в главном скрипте bash скрипта `cloud-alb-create`.
+Код создания групп размещён в TF файле `terraform/yc-security-groups/yc_sg.tf`.
 
 Создаём следующие группы безопасности (Security Groups)
 1. Группа безопасности `sg-web` для двух ВМ с web серверами - сайт:
 - входящий трафик на порт 80 по TCP с любого ip (CIDR 0.0.0.0/0) - доступ к сайту по HTTP
-- входящий трафик на порт 8080 по TCP с любого ip (CIDR 0.0.0.0/0) - доступ к сайту по HTTPS
 - входящий трафик на порт 9100 по TCP с внутреннего ip (CIDR 10.128.0.0/16,10.129.0.0/16) - доступ к Node Exporter из двух подсетей
 - входящий трафик на порт 4040 по TCP с внутреннего ip (CIDR 10.128.0.0/16,10.129.0.0/16) - доступ к Nginx Log Exporter из двух подсетей
 - входящий трафик: добавляем предустановленное правило loadbalancer_healthchecks - для проверки состояния балансировщика
 - входящий трафик на порт 22 по TCP(SSH) с внутреннего ip vm-grafana (bastion) (CIDR 10.128.0.22/32) - доступ по SSH только из внутренней сети и только с одного хоста
 - исходящий трафик на порт 9200 по TCP на внутренний ip (CIDR 10.128.0.0/16) - логи от Filebeat к Elasticsearch (подсеть зоны А)
-- *(?)исходящий трафик на порт 5601 по TCP на внутренний ip (CIDR 10.128.0.0/16) - доступ Filebeat к Kibana (подсеть зоны А)*
 
 2. Группа безопасности `sg-prometheus` для ВМ с Prometheus:
 - входящий трафик на порт 9090 по TCP с внутреннего ip (CIDR 10.128.0.0/16) - доступ к Prometheus из подсети зоны А
 - входящий трафик на порт 22 по TCP(SSH) с внутреннего ip vm-grafana (bastion) (CIDR 10.128.0.22/32) - доступ по SSH только из внутренней сети и только с одного хоста
 - исходящий трафик на порт 9100 по TCP на внутренний ip (CIDR 10.128.0.0/16,10.129.0.0/16) - запросы от Prometheus к Node Exporter в две подсети
 - исходящий трафик на порт 4040 по TCP на внутренний ip (CIDR 10.128.0.0/16,10.129.0.0/16) - запросы от Prometheus к Nginx Log Exporter в две подсети
+- исходящий трафик на порт 9200 по TCP на внутренний ip (CIDR 10.128.0.0/16) - логи от Filebeat к Elasticsearch (подсеть зоны А)
 
 3. Группа безопасности `sg-grafana` для ВМ с Grafana и с ролью Bastion Host:
 - входящий трафик на порт 3000 по TCP с любого ip (CIDR 0.0.0.0/0) - доступ к GUI
 - входящий трафик на порт 22 по TCP(SSH) с любого ip (CIDR 0.0.0.0/0) - доступ по SSH из любой сети (Bastion Host)
 - исходящий трафик на порт 22 по TCP(SSH) на внутренний ip (CIDR 10.128.0.0/16,10.129.0.0/16) - подключение к любой ВМ в двух подсетях (Bastion Host)
 - исходящий трафик на порт 9100 по TCP на внутренний ip (CIDR 10.128.0.0/16) - подключение к Prometheus (подсеть зоны А)
+- исходящий трафик на порт 9200 по TCP на внутренний ip (CIDR 10.128.0.0/16) - логи от Filebeat к Elasticsearch (подсеть зоны А)
 
 4. Группа безопасности `sg-elastic` для ВМ Elasticsearch:
 - входящий трафик на порт 22 по TCP(SSH) с внутреннего ip vm-grafana (bastion) (CIDR 10.128.0.22/32) - доступ по SSH только из внутренней сети и только с одного хоста
@@ -471,103 +474,66 @@ yc vpc subnet create --name default-ru-central1-b --description "Подсеть 
 - исходящий трафик на порт 9200 по TCP на внутренний ip (CIDR 10.128.0.0/24) - логи от Filebeat к Elasticsearch
 
 Для реализации роли Bastion Host (возможность доступа по SSH с одной ВМ на остальные ВМ в VPC) необходимо скопировать используемые для авторизации по SSH пару ключей на ВМ Grafana.
-Копирование публичного ключа выполняется на этапе создания ВМ.  Копирование приватного ключа выполняется в ansible playbook сценарии `monitoring.yaml` (bash скрипт `cloud-monitoring-install`).
+Копирование публичного ключа выполняется на этапе создания ВМ.  Копирование приватного ключа выполняется в ansible playbook сценарии `monitoring.yaml`
 
-**Листинг команд с использованием YC CLI:**
+**Листинг команд с использованием Terraform:**
 ```bash
-NETWORK_ID=$(yc vpc network get --name default |grep -e "^id: " |awk '{print $ 2}')
-#
-# создаём группу безопасности sg-web
-yc vpc security-group create --name sg-web --description "SG для WEB" --network-id $NETWORK_ID \
---rule description="in web server",direction=ingress,port=80,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
---rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
---rule description="from internal to metrics node-exporter",direction=ingress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
---rule description="from internal to metrics nginxlog-exporter",direction=ingress,port=4040,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
---rule description="loadbalancer healthchecks",direction=ingress,port=any,protocol=any,predefined=loadbalancer_healthchecks \
---rule description="to internal Elasticsearch from Filebeat",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
---rule description="to internal Kibana from Filebeat",direction=egress,port=5601,protocol=tcp,v4-cidrs=[10.128.0.0/16]
+###########################
+#Создаем ВМ SG и назначаем на интерфейсы ВМ
+#Освобождаем не используемые публичные IP-адреса 
+###########################
 
-# подключаем группу безопасности sg-web к сетевому интерфейсу ВМ vm-web1 и vm-web2
-SG_WEB_ID=$(yc vpc security-group get --name sg-web |grep -e "^id: " |awk '{print $ 2}')
-for VM_NAME in vm-web1 vm-web2
-do
-    yc compute instance update-network-interface --name $VM_NAME --network-interface-index 0 --security-group-id $SG_WEB_ID
-    #yc compute instance update-network-interface --name $VM_NAME --network-interface-index 0 --security-group-name sg-web #по имени группы не подключает
-done
+# создаём группы безопасности sg-web, sg-prometheus, sg-grafana, sg-elastic, sg-kibana
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/yc_sg.tf ~/Thesis-on-the-Profession/terraform/
+cd ~/Thesis-on-the-Profession/terraform/
+#terraform init
+terraform plan
+terraform apply -auto-approve
 
-#
-# создаём группу безопасности sg-prometheus
-yc vpc security-group create --name sg-prometheus --description "SG для Prometheus" --network-id $NETWORK_ID \
---rule description="from internal Grafana to Prometheus",direction=ingress,port=9090,protocol=tcp,v4-cidrs=[10.128.0.0/16] \
---rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
---rule description="to internal Node Exporter from Prometheus",direction=egress,port=9100,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
---rule description="to internal Nginx Log Exporter from Prometheus",direction=egress,port=4040,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
-
-# подключаем группу безопасности sg-prometheus к сетевому интерфейсу ВМ vm-prometheus
-SG_PROMETHEUS_ID=$(yc vpc security-group get --name sg-prometheus |grep -e "^id: " |awk '{print $ 2}')
-yc compute instance update-network-interface --name $MONS_VM1_NAME --network-interface-index 0 --security-group-id $SG_PROMETHEUS_ID
-#yc compute instance update-network-interface --name $MONS_VM1_NAME --network-interface-index 0 --security-group-name sg-prometheus #по имени группы не подключает
-
-#
-# создаём группу безопасности sg-grafana
-yc vpc security-group create --name sg-grafana --description "SG для Grafana" --network-id $NETWORK_ID \
---rule description="in Grafana GUI",direction=ingress,port=3000,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
---rule description="in Grafana SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
---rule description="to internal Prometheus from Grafana",direction=egress,port=9090,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
---rule description="to internal VM SSH from Grafana",direction=egress,port=22,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
-
+# подключаем группу безопасности sg-web к сетевому интерфейсу ВМ vm-web1 и vm-web2. Освободдаем публичные IP.
+# подключаем группу безопасности sg-prometheus к сетевому интерфейсу ВМ vm-prometheus. Освободдаем публичные IP.
 # подключаем группу безопасности sg-grafana к сетевому интерфейсу ВМ vm-grafana
-SG_GRAFANA_ID=$(yc vpc security-group get --name sg-grafana |grep -e "^id: " |awk '{print $ 2}')
-yc compute instance update-network-interface --name $MONS_VM2_NAME --network-interface-index 0 --security-group-id $SG_GRAFANA_ID
+# подключаем группу безопасности sg-elastic к сетевому интерфейсу ВМ vm-elastic. Освободдаем публичные IP.
+# подключаем группу безопасности sg-kibana к сетевому интерфейсу ВМ vm-kibana. Освободдаем публичные IP.
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_log-collection.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_website.tf ~/Thesis-on-the-Profession/terraform/
+cp -f ~/Thesis-on-the-Profession/terraform/yc-security-groups/main_monitoring.tf ~/Thesis-on-the-Profession/terraform/
+cd ~/Thesis-on-the-Profession/terraform/
+#terraform init
+terraform plan
+terraform apply -auto-approve
 
-#
-# создаём группу безопасности sg-elastic
-yc vpc security-group create --name sg-elastic --description "SG для Elasticsearch" --network-id $NETWORK_ID \
---rule description="from internal to Elasticsearc",direction=ingress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16] \
---rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
---rule description="to internal Kibana from Elasticsearch",direction=egress,port=5601,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
-
-# подключаем группу безопасности sg-elastic к сетевому интерфейсу ВМ vm-elastic
-SG_ELASTIC_ID=$(yc vpc security-group get --name sg-elastic |grep -e "^id: " |awk '{print $ 2}')
-yc compute instance update-network-interface --name $LOGS_VM1_NAME --network-interface-index 0 --security-group-id $SG_ELASTIC_ID
-
-# создаём группу безопасности sg-kibana
-yc vpc security-group create --name sg-kibana --description "SG для Kibana" --network-id $NETWORK_ID \
---rule description="in Kibana GUI",direction=ingress,port=5601,protocol=tcp,v4-cidrs=[0.0.0.0/0] \
---rule description="from internal Grafana to SSH",direction=ingress,port=22,protocol=tcp,v4-cidrs=[10.128.0.22/32] \
---rule description="to internal Elasticsearch from Kibana",direction=egress,port=9200,protocol=tcp,v4-cidrs=[10.128.0.0/16,10.129.0.0/16]
-
-# подключаем группу безопасности sg-kibana к сетевому интерфейсу ВМ vm-kibana
-SG_KIBANA_ID=$(yc vpc security-group get --name sg-kibana |grep -e "^id: " |awk '{print $ 2}')
-yc compute instance update-network-interface --name $LOGS_VM2_NAME --network-interface-index 0 --security-group-id $SG_KIBANA_ID
 ```
-
-С содержимом файла bash скрипта **[cloud-alb-create](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-alb-create)** можно ознакомится подробно.
+С содержимом файлов сценариев terraform можно ознакомится подробно:
+- **[yc_sg.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-security-groups/yc_sg.tf)**
+- **[main_website.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-security-groups/main_website.tf)**
+- **[main_monitoring.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-security-groups/main_monitoring.tf)**
+- **[main_log-collection.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-security-groups/main_log-collection.tf)**
 
 ---
 
 ### Резервное копирование
 
 Создал расписание (snapshot-schedule) `project-snapshot-schedule` создания снимков (snapshot): снимки создаются ежедневно в 03:10 (UTC+3) или 0:10 (UTC+0), срок хранения снимков 1-а неделя (168 часов).
-В созданное раписание `project-snapshot-schedule` добавил все диски всех ВМ из каталога проекта.
-Процесс создания и добавления реализован в bash скрипте `cloud-snapshot-shed-create` (вызывается в основном bash скрипте `INSTALL-cloud-infrastructure`)
+Процесс создания и добавления реализован в файле TF `terraform/yc-snapshots/yc_snapshot_schedule.tf`
 
-**Листинг команд с использованием YC CLI:**
+**Листинг команд с использованием Terraform:**
 ```bash
-# создаём расписание project-snapshot-schedule в текущем каталоге
-yc compute snapshot-schedule create project-snapshot-schedule \
---description "Ежедневные снимки. Срок харанения 7 дней" \
---expression "10 0 ? * *" \
---start-at "1h" \
---retention-period 168h
+###########################
+#Создаем ВМ SG и назначаем на интерфейсы ВМ
+#Освобождаем не используемые публичные IP-адреса 
+###########################
 
-# добавляем в расписание project-snapshot-schedule все диски в текущем каталоге
-yc compute snapshot-schedule add-disks \
---name project-snapshot-schedule \
---disk-id $(yc compute disk list |awk 'NR > 3' |cut -d ' ' -f 2 |head -n -2 |paste -sd ',')
+# создаём расписание project-snapshot-schedule
+# добавляем в расписание project-snapshot-schedule диски ВМ
+cp -f ~/Thesis-on-the-Profession/terraform/yc-snapshots/yc_snapshot_schedule.tf ~/Thesis-on-the-Profession/terraform/
+#terraform init
+terraform plan
+terraform apply -auto-approve
+
 ```
 
-С содержимом файла bash скрипта **[cloud-snapshot-shed-create](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/cloud-snapshot-shed-create)** можно ознакомится подробно.
+С содержимом файла сценария terraform **[yc_snapshot_schedule.tf](https://github.com/StanislavBaranovskii/Thesis-on-the-Profession/tree/main/terraform/yc-snapshots/yc_snapshot_schedule.tf)** можно ознакомится подробно.
 
 Перед созданием снимка диска ВМ необходимо, на время создания снимка, остановить ВМ.
 Или для Linux подобных ОС для не системных дисков:
