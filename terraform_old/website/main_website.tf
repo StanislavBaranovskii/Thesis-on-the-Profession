@@ -12,12 +12,7 @@ resource "yandex_compute_instance" "vm_web_1" {
   }
 
   boot_disk {
-    mode        = "READ_WRITE"
-    initialize_params {
-      image_id  = "fd83u9thmahrv9lgedrk"
-      size      = 3
-      type      = "network-hdd"
-    }
+    disk_id     = "${yandex_compute_disk.disk_web_1.id}"
   }
   
   network_interface {
@@ -33,6 +28,7 @@ resource "yandex_compute_instance" "vm_web_1" {
 
   metadata = {
     ssh-keys    = "yc-user:${file("~/.ssh/id_ed25519.pub")}"
+    user-data   = "#cloud-config\ndatasource:\n Ec2:\n  strict_id: false\nssh_pwauth: no\nusers:\n- name: yc-user\n  sudo: ALL=(ALL) NOPASSWD:ALL\n  shell: /bin/bash\n  ssh_authorized_keys:\n  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIERNr0N5ErxpchHSDIj/sUiDBrmEzqVDA3CT4vNjb0U5 baranovskii@baranovskyiiTravelMate"
   }
 }
 
@@ -50,12 +46,7 @@ resource "yandex_compute_instance" "vm_web_2" {
   }
 
   boot_disk {
-    mode        = "READ_WRITE"
-    initialize_params {
-      image_id  = "fd83u9thmahrv9lgedrk"
-      size      = 3
-      type      = "network-hdd"
-    }
+    disk_id     = "${yandex_compute_disk.disk_web_2.id}"
   }
   
   network_interface {
@@ -71,5 +62,6 @@ resource "yandex_compute_instance" "vm_web_2" {
 
   metadata = {
     ssh-keys    = "yc-user:${file("~/.ssh/id_ed25519.pub")}"
+    user-data   = "#cloud-config\ndatasource:\n Ec2:\n  strict_id: false\nssh_pwauth: no\nusers:\n- name: yc-user\n  sudo: ALL=(ALL) NOPASSWD:ALL\n  shell: /bin/bash\n  ssh_authorized_keys:\n  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIERNr0N5ErxpchHSDIj/sUiDBrmEzqVDA3CT4vNjb0U5 baranovskii@baranovskyiiTravelMate"
   }
 }
