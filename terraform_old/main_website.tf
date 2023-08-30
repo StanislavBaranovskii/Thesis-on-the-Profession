@@ -19,12 +19,17 @@ resource "yandex_compute_instance" "vm_web_1" {
     subnet_id   = "${yandex_vpc_subnet.subnet_a.id}"
     ip_address  = var.vm_web_1.internal_ip
     nat         = true
+    dns_record {
+      fqdn         = "${var.vm_web_1.hostname}.example.ru."
+      dns_zone_id  = "${yandex_dns_zone.my_dns_zone.id}"
+      ptr          = true
+    }
   }
   
   scheduling_policy {
     preemptible = true
   }
-
+  
 
   metadata = {
     ssh-keys    = var.user_metadata.ssh-keys
@@ -53,12 +58,17 @@ resource "yandex_compute_instance" "vm_web_2" {
     subnet_id   = "${yandex_vpc_subnet.subnet_b.id}"
     ip_address  = var.vm_web_2.internal_ip
     nat         = true
+    dns_record {
+      fqdn         = "${var.vm_web_2.hostname}.example.ru."
+      dns_zone_id  = "${yandex_dns_zone.my_dns_zone.id}"
+      ptr          = true
+    }
   }
   
   scheduling_policy {
     preemptible = true
   }
-
+  
 
   metadata = {
     ssh-keys    = var.user_metadata.ssh-keys

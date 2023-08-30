@@ -71,16 +71,14 @@ variable "vm_web_1" {
     memory            = number
     disk_size         = number
  }))
- default = [
-    {  
-      zone            = "ru-central1-a"
-      hostname        = "vm-web1"
-      internal_ip     = "10.128.0.11"
-      cores           = 2
-      memory          = 1
+ default = {  
+      zone            = "ru-central1-a",
+      hostname        = "vm-web1",
+      internal_ip     = "10.128.0.11",
+      cores           = 2,
+      memory          = 1,
       disk_size       = 3
     }
-  ]
 }
 
 variable "vm_web_2" {
@@ -92,19 +90,17 @@ variable "vm_web_2" {
     memory            = number
     disk_size         = number
  }))
- default = [
-    {
-      zone            = "ru-central1-b"
-      hostname        = "vm-web2"
-      internal_ip     = "10.129.0.11"
-      cores           = 2
-      memory          = 1
+ default = {
+      zone            = "ru-central1-b",
+      hostname        = "vm-web2",
+      internal_ip     = "10.129.0.11",
+      cores           = 2,
+      memory          = 1,
       disk_size         = 3
     }
-  ]
 }
 
-
+/*
 variable "user_metadata" {
  type = map(object({
     ssh-keys          = string
@@ -118,4 +114,4 @@ variable "user_metadata" {
     }
   ]
 }
-
+*/

@@ -4,7 +4,7 @@ resource "yandex_iam_service_account" "sa_terraform" {
 }
 
 resource "yandex_resourcemanager_folder_iam_binding" "editor" {
-  folder_id = "b1gadaampg6bbldf60up"
+  folder_id = "${yandex_resourcemanager_folder.my_folder}"
   role      = "editor"
   members   = [
     "serviceAccount:${yandex_iam_service_account.sa_terraform.id}",

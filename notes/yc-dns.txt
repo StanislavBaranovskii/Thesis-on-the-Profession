@@ -1,0 +1,10 @@
+yc components update
+
+yc dns zone list
+
+yc dns zone get <имя зоны DNS>
+
+yc dns zone create --help
+
+yc dns zone create --name my-dns-zone --description "Моя DNS зона" --zone staging. --private-visibility network-ids=b1gadaampg6bbldf70up,b1gadaampg6bbldf80up
+

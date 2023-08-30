@@ -121,6 +121,15 @@ do
 done
 yc compute snapshot list
 
+#DNS
+echo "DNS..."
+for NAME in $(yc dns zone list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
+do
+  echo "...remove subnet: $NAME"
+  yc dns zone delete $NAME
+done
+yc dns zone list
+
 #Subnet
 echo "Subnet..."
 for NAME in $(yc vpc subnet list |awk 'NR > 3' |cut -d ' ' -f 4 |head -n -2 |paste -sd ' ')
