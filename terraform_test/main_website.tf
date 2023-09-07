@@ -2,12 +2,12 @@ resource "yandex_compute_instance" "vm_web_1" {
   name                      = "vm-web1"
   allow_stopping_for_update = true
   platform_id               = "standard-v1"
-  zone                      = "ru-central1-a"
-  hostname                  = "debian-vm-web1"
+  zone                      = var.vm_web_1.zone
+  hostname                  = var.vm_web_1.hostname
 
   resources {
-    cores          = 2
-    memory         = 1
+    cores          = var.vm_web_1.cores
+    memory         = var.vm_web_1.memory
     core_fraction  = 20
   }
 
@@ -16,15 +16,20 @@ resource "yandex_compute_instance" "vm_web_1" {
   }
   
   network_interface {
-    subnet_id   = "${yandex_vpc_subnet.subnet_a.id}"
-    ip_address  = "10.128.0.11"
+    subnet_id   = "${yandex_vpc_subnet.subn_a.id}"
+    ip_address  = var.vm_web_1.internal_ip
     nat         = true
+    dns_record {
+      fqdn         = "${var.vm_web_1.hostname}.example.ru."
+      dns_zone_id  = "${yandex_dns_zone.my_dns_zone.id}"
+      ptr          = false
+    }
   }
   
   scheduling_policy {
     preemptible = true
   }
-
+  
 
   metadata = {
     ssh-keys    = "yc-user:${file("~/.ssh/id_ed25519.pub")}"
@@ -36,12 +41,12 @@ resource "yandex_compute_instance" "vm_web_2" {
   name                      = "vm-web2"
   allow_stopping_for_update = true
   platform_id               = "standard-v1"
-  zone                      = "ru-central1-b"
-  hostname                  = "debian-vm-web2"
+  zone                      = var.vm_web_2.zone
+  hostname                  = var.vm_web_2.hostname
 
   resources {
-    cores          = 2
-    memory         = 1
+    cores          = var.vm_web_2.cores
+    memory         = var.vm_web_2.memory
     core_fraction  = 20
   }
 
@@ -50,15 +55,20 @@ resource "yandex_compute_instance" "vm_web_2" {
   }
   
   network_interface {
-    subnet_id   = "${yandex_vpc_subnet.subnet_b.id}"
-    ip_address  = "10.129.0.11"
+    subnet_id   = "${yandex_vpc_subnet.subn_b.id}"
+    ip_address  = var.vm_web_2.internal_ip
     nat         = true
+    dns_record {
+      fqdn         = "${var.vm_web_2.hostname}.example.ru."
+      dns_zone_id  = "${yandex_dns_zone.my_dns_zone.id}"
+      ptr          = false
+    }
   }
   
   scheduling_policy {
     preemptible = true
   }
-
+  
 
   metadata = {
     ssh-keys    = "yc-user:${file("~/.ssh/id_ed25519.pub")}"

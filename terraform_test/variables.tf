@@ -1,44 +1,39 @@
 variable "subnet_a" {
   description         = "Имя и IP подсети A"
-  type = list(object({
+  type = object({
     zone_name         = string
     cidr_blocks       = list(string)
-  }))
-  default = [
-    {
+  })
+  default = {
       zone_name       = "ru-central1-a"
       cidr_blocks     = ["10.128.0.0/24"]
-    }
-  ]
+  }
 }
 
 variable "subnet_b" {
   description         = "Имя и IP подсети B"
-  type = list(object({
+  type = object({
     zone_name         = string
     cidr_blocks       = list(string)
-  }))
-  default = [
-    {
+  })
+  default = {
       zone_name       = "ru-central1-b"
       cidr_blocks     = ["10.129.0.0/24"]
-    }
-  ]
+  }
 }
 
 variable "subnet_c" {
   description         = "Имя и IP подсети C"
-  type = list(object({
+  type = object({
     zone_name         = string
     cidr_blocks       = list(string)
-  }))
-  default = [
-    {
+  })
+  default = {
       zone_name       = "ru-central1-c"
       cidr_blocks     = ["10.130.0.0/24"]
-    }
-  ]
+  }
 }
+
 
 
 
@@ -82,21 +77,21 @@ variable "vm_web_1" {
 }
 
 variable "vm_web_2" {
- type = map(object({
+ type = object({
     zone              = string
     hostname          = string
     internal_ip       = string
     cores             = number
     memory            = number
     disk_size         = number
- }))
+ })
  default = {
       zone            = "ru-central1-b",
       hostname        = "vm-web2",
       internal_ip     = "10.129.0.11",
       cores           = 2,
       memory          = 1,
-      disk_size         = 3
+      disk_size       = 3
     }
 }
 

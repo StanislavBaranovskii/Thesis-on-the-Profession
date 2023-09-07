@@ -16,7 +16,7 @@ resource "yandex_compute_instance" "vm_web_1" {
   }
   
   network_interface {
-    subnet_id   = "${yandex_vpc_subnet.subnet_a.id}"
+    subnet_id   = "${yandex_vpc_subnet.subn_a.id}"
     ip_address  = var.vm_web_1.internal_ip
     nat         = true
     dns_record {
@@ -55,7 +55,7 @@ resource "yandex_compute_instance" "vm_web_2" {
   }
   
   network_interface {
-    subnet_id   = "${yandex_vpc_subnet.subnet_b.id}"
+    subnet_id   = "${yandex_vpc_subnet.subn_b.id}"
     ip_address  = var.vm_web_2.internal_ip
     nat         = true
     dns_record {
